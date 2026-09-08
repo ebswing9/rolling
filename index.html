@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
+<title>롤링페이퍼 쓰기</title>
+<link rel="stylesheet" href="app.css" />
+</head>
+<body>
+<div class="rp-shell">
+  <div class="rp-brand">
+    <span class="mark">💌</span>
+    <h1>우리반 롤링페이퍼</h1>
+  </div>
+
+  <!-- 작성 기간이 닫혔을 때 -->
+  <div id="closedView" class="rp-card-box" style="display:none;">
+    <p style="text-align:center; font-size:15px; color:var(--rp-ink-soft); padding:30px 0;">
+      🔒 아직 롤링페이퍼 작성 기간이 아니에요.<br />선생님이 열어주실 때까지 기다려주세요!
+    </p>
+  </div>
+
+  <!-- 이름 선택 화면 -->
+  <div id="selectNameView" class="rp-card-box" style="display:none;">
+    <div class="rp-field">
+      <label>내 이름을 선택하세요</label>
+      <select id="nameSelect"></select>
+    </div>
+    <button class="rp-btn primary block" id="selectNameBtn">다음</button>
+    <p class="rp-error" id="selectNameError"></p>
+  </div>
+
+  <!-- 최초 비밀번호 설정 화면 -->
+  <div id="setPasswordView" class="rp-card-box" style="display:none;">
+    <p class="rp-notice">👋 <b id="setPwName"></b>님, 처음 오셨네요! 다음에 다시 들어올 때 쓸 비밀번호를 정해주세요.</p>
+    <div class="rp-field">
+      <label>비밀번호 (숫자/영문 4자 이상)</label>
+      <input type="password" id="newPassword" minlength="4" />
+    </div>
+    <div class="rp-field">
+      <label>비밀번호 확인</label>
+      <input type="password" id="newPasswordConfirm" minlength="4" />
+    </div>
+    <div class="rp-row">
+      <button class="rp-btn ghost" id="setPwBackBtn">뒤로</button>
+      <button class="rp-btn primary block" id="setPwConfirmBtn">설정하고 시작하기</button>
+    </div>
+    <p class="rp-error" id="setPwError"></p>
+  </div>
+
+  <!-- 비밀번호 입력 화면 -->
+  <div id="loginView" class="rp-card-box" style="display:none;">
+    <p class="rp-notice">🔑 <b id="loginName"></b>님, 비밀번호를 입력해주세요.</p>
+    <div class="rp-field">
+      <label>비밀번호</label>
+      <input type="password" id="loginPassword" />
+    </div>
+    <div class="rp-row">
+      <button class="rp-btn ghost" id="loginBackBtn">뒤로</button>
+      <button class="rp-btn primary block" id="loginConfirmBtn">들어가기</button>
+    </div>
+    <p class="rp-error" id="loginError"></p>
+  </div>
+
+  <!-- 명단 화면 -->
+  <div id="rosterView" style="display:none;">
+    <div class="rp-row" style="justify-content:space-between; margin-bottom:14px;">
+      <span style="font-weight:700;">✏️ <span id="meName"></span>님, 안녕하세요!</span>
+      <button class="rp-btn ghost" id="logoutBtn" style="padding:6px 12px; font-size:13px;">나가기</button>
+    </div>
+    <p class="rp-progress" id="progressText"></p>
+    <div class="rp-roster-list" id="rosterList"></div>
+  </div>
+
+  <!-- 작성 화면 -->
+  <div id="writeView" class="rp-card-box" style="display:none;">
+    <p class="rp-notice" style="margin-bottom:16px;"><b id="writeToName"></b>님에게 마음을 전해보세요.</p>
+    <div class="rp-field">
+      <textarea id="writeContent" maxlength="200" placeholder="따뜻한 한마디를 남겨주세요 (최대 200자)"></textarea>
+      <div class="rp-charcount"><span id="writeCharCount">0</span>/200</div>
+    </div>
+    <div class="rp-row">
+      <button class="rp-btn ghost" id="writeBackBtn">뒤로</button>
+      <button class="rp-btn primary block" id="writeSubmitBtn">작성 완료</button>
+    </div>
+    <p class="rp-error" id="writeError"></p>
+  </div>
+</div>
+
+<!-- 전체 완료 모달 -->
+<div id="completeModal" class="rp-modal-backdrop" style="display:none;">
+  <div class="rp-modal">
+    <div class="emoji">🎉</div>
+    <h2>롤링페이퍼 작성을 완료했습니다!</h2>
+    <p>반 친구들 모두에게 따뜻한 마음을 전했어요.<br/>수고하셨습니다 :)</p>
+    <button class="rp-btn primary block" id="completeCloseBtn">확인</button>
+  </div>
+</div>
+
+<script type="module">
+import {
+  watchIsOpen,
+  getRoster,
+  hasPassword,
+  setPassword,
+  checkPassword,
+  writeMessage,
+  watchWrittenBy,
+} from "./rolling-common.js";
+
+let roster = {};          // { id: { name } }
+let currentId = null;
+let currentName = null;
+let pendingLoginId = null; // 이름 선택 후, 비밀번호 단계로 넘기기 전 임시 저장
+let writtenMap = {};
+let unsubWritten = null;
+
+const $ = (id) => document.getElementById(id);
+
+function showOnly(viewId) {
+  ["closedView", "selectNameView", "setPasswordView", "loginView", "rosterView", "writeView"].forEach((id) => {
+    $(id).style.display = id === viewId ? "" : "none";
+  });
+}
+
+// ---------- 초기 진입: 작성 기간 확인 ----------
+watchIsOpen(async (isOpen) => {
+  if (!isOpen) {
+    if (unsubWritten) unsubWritten();
+    currentId = null;
+    sessionStorage.removeItem("rp_studentId");
+    showOnly("closedView");
+    return;
+  }
+  roster = await getRoster();
+  const savedId = sessionStorage.getItem("rp_studentId");
+  if (savedId && roster[savedId]) {
+    enterRoster(savedId, roster[savedId].name);
+  } else {
+    renderNameSelect();
+    showOnly("selectNameView");
+  }
+});
+
+function renderNameSelect() {
+  const sel = $("nameSelect");
+  sel.innerHTML = Object.entries(roster)
+    .sort((a, b) => a[1].name.localeCompare(b[1].name, "ko"))
+    .map(([id, s]) => `<option value="${id}">${s.name}</option>`)
+    .join("");
+}
+
+$("selectNameBtn").onclick = async () => {
+  const id = $("nameSelect").value;
+  if (!id) return;
+  pendingLoginId = id;
+  const already = await hasPassword(id);
+  if (already) {
+    $("loginName").textContent = roster[id].name;
+    $("loginPassword").value = "";
+    $("loginError").textContent = "";
+    showOnly("loginView");
+  } else {
+    $("setPwName").textContent = roster[id].name;
+    $("newPassword").value = "";
+    $("newPasswordConfirm").value = "";
+    $("setPwError").textContent = "";
+    showOnly("setPasswordView");
+  }
+};
+
+$("setPwBackBtn").onclick = () => showOnly("selectNameView");
+$("loginBackBtn").onclick = () => showOnly("selectNameView");
+
+$("setPwConfirmBtn").onclick = async () => {
+  const p1 = $("newPassword").value;
+  const p2 = $("newPasswordConfirm").value;
+  if (p1.length < 4) {
+    $("setPwError").textContent = "비밀번호는 4자 이상으로 정해주세요.";
+    return;
+  }
+  if (p1 !== p2) {
+    $("setPwError").textContent = "비밀번호가 서로 달라요. 다시 확인해주세요.";
+    return;
+  }
+  await setPassword(pendingLoginId, p1);
+  enterRoster(pendingLoginId, roster[pendingLoginId].name);
+};
+
+$("loginConfirmBtn").onclick = async () => {
+  const ok = await checkPassword(pendingLoginId, $("loginPassword").value);
+  if (!ok) {
+    $("loginError").textContent = "비밀번호가 맞지 않아요. 다시 시도해주세요.";
+    return;
+  }
+  enterRoster(pendingLoginId, roster[pendingLoginId].name);
+};
+
+function enterRoster(id, name) {
+  currentId = id;
+  currentName = name;
+  sessionStorage.setItem("rp_studentId", id);
+  $("meName").textContent = name;
+  if (unsubWritten) unsubWritten();
+  unsubWritten = watchWrittenBy(id, (map) => {
+    writtenMap = map;
+    renderRosterList();
+  });
+  showOnly("rosterView");
+}
+
+function renderRosterList() {
+  const others = Object.entries(roster).filter(([id]) => id !== currentId);
+  const doneCount = others.filter(([id]) => writtenMap[id]).length;
+  $("progressText").textContent = `${others.length}명 중 ${doneCount}명에게 작성 완료`;
+
+  $("rosterList").innerHTML = others
+    .sort((a, b) => a[1].name.localeCompare(b[1].name, "ko"))
+    .map(([id, s]) => {
+      const done = !!writtenMap[id];
+      return `<div class="rp-roster-item ${done ? "done" : ""}" data-id="${id}">
+        <span>${s.name}</span>
+        <span class="rp-badge ${done ? "done" : "todo"}">${done ? "작성 완료" : "미작성"}</span>
+      </div>`;
+    })
+    .join("");
+
+  $("rosterList").querySelectorAll(".rp-roster-item").forEach((el) => {
+    el.onclick = () => openWrite(el.dataset.id);
+  });
+
+  if (others.length > 0 && doneCount === others.length) {
+    $("completeModal").style.display = "flex";
+  }
+}
+
+let writingToId = null;
+
+function openWrite(toId) {
+  writingToId = toId;
+  $("writeToName").textContent = roster[toId].name;
+  $("writeContent").value = "";
+  $("writeCharCount").textContent = "0";
+  $("writeError").textContent = "";
+  showOnly("writeView");
+}
+
+$("writeContent").oninput = (e) => {
+  $("writeCharCount").textContent = e.target.value.length;
+};
+
+$("writeBackBtn").onclick = () => showOnly("rosterView");
+
+$("writeSubmitBtn").onclick = async () => {
+  const content = $("writeContent").value.trim();
+  if (!content) {
+    $("writeError").textContent = "내용을 입력해주세요.";
+    return;
+  }
+  $("writeSubmitBtn").disabled = true;
+  await writeMessage(currentId, writingToId, content);
+  $("writeSubmitBtn").disabled = false;
+  showOnly("rosterView");
+};
+
+$("logoutBtn").onclick = () => {
+  sessionStorage.removeItem("rp_studentId");
+  if (unsubWritten) unsubWritten();
+  currentId = null;
+  renderNameSelect();
+  showOnly("selectNameView");
+};
+
+$("completeCloseBtn").onclick = () => {
+  $("completeModal").style.display = "none";
+};
+</script>
+</body>
+</html>

@@ -1,0 +1,180 @@
+/* pdf-templates.css
+   PDF로 렌더링될 4가지 롤링페이퍼 디자인 템플릿.
+   .rp-page 안의 --rp-font-size 변수는 pdf-export.js가 자동으로
+   조절하여 A4 2페이지 안에 맞춥니다. */
+
+@import url("https://fonts.googleapis.com/css2?family=Gaegu:wght@400;700&family=Noto+Sans+KR:wght@400;500;700;900&family=Noto+Serif+KR:wght@400;600&display=swap");
+
+.rp-page {
+  width: 794px;
+  padding: 40px 36px;
+  background: #ffffff;
+  box-sizing: border-box;
+  --rp-font-size: 16px;
+}
+
+.rp-page .rp-title {
+  font-weight: 900;
+  margin: 0 0 24px;
+  text-align: center;
+}
+
+/* ---------- 1. 포스트잇 콜라주형 ---------- */
+.rp-postit {
+  font-family: "Gaegu", sans-serif;
+  background: #fffdf7;
+}
+
+.rp-postit .rp-title {
+  font-size: calc(var(--rp-font-size) * 1.9);
+  color: #4a3f2a;
+}
+
+.rp-note-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px;
+  justify-content: center;
+}
+
+.rp-note {
+  width: 220px;
+  min-height: 130px;
+  background: var(--bg, #fff3b0);
+  transform: rotate(var(--rot, 0deg));
+  border-radius: 4px;
+  padding: 14px 16px;
+  box-shadow: 0 6px 10px -4px rgba(0, 0, 0, 0.18);
+}
+
+.rp-note-content {
+  font-size: var(--rp-font-size);
+  line-height: 1.35;
+  margin: 0 0 10px;
+  color: #3a3323;
+  word-break: keep-all;
+}
+
+.rp-note-from {
+  font-size: calc(var(--rp-font-size) * 0.85);
+  text-align: right;
+  margin: 0;
+  color: #5a5030;
+  font-weight: 700;
+}
+
+/* ---------- 2. 카드 그리드형 ---------- */
+.rp-grid {
+  font-family: "Noto Sans KR", sans-serif;
+}
+
+.rp-grid .rp-title {
+  font-size: calc(var(--rp-font-size) * 1.7);
+  color: #2b2e4a;
+  border-bottom: 3px solid #2b2e4a;
+  padding-bottom: 14px;
+}
+
+.rp-card-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+}
+
+.rp-card {
+  border: 1.5px solid #d8dbe8;
+  border-radius: 8px;
+  padding: 10px 12px;
+  background: #fafbff;
+}
+
+.rp-card-content {
+  font-size: var(--rp-font-size);
+  line-height: 1.4;
+  margin: 0 0 8px;
+  word-break: keep-all;
+}
+
+.rp-card-from {
+  font-size: calc(var(--rp-font-size) * 0.8);
+  text-align: right;
+  margin: 0;
+  color: #6b6f8f;
+  font-weight: 700;
+}
+
+/* ---------- 3. 편지지 리스트형 ---------- */
+.rp-letter {
+  font-family: "Noto Serif KR", serif;
+  background: #fffefb;
+}
+
+.rp-letter .rp-title {
+  font-size: calc(var(--rp-font-size) * 2);
+  color: #3d2f22;
+  font-style: italic;
+}
+
+.rp-letter-list {
+  display: flex;
+  flex-direction: column;
+}
+
+.rp-letter-item {
+  padding: 12px 0;
+  border-bottom: 1px dashed #d9cdb8;
+}
+
+.rp-letter-content {
+  font-size: var(--rp-font-size);
+  line-height: 1.55;
+  margin: 0 0 6px;
+  word-break: keep-all;
+}
+
+.rp-letter-from {
+  font-size: calc(var(--rp-font-size) * 0.82);
+  text-align: right;
+  margin: 0;
+  color: #8a7a5f;
+}
+
+/* ---------- 4. 파스텔 톤형 ---------- */
+.rp-pastel {
+  font-family: "Gaegu", sans-serif;
+  background: linear-gradient(180deg, #eef2fb, #f7f3fb);
+}
+
+.rp-pastel .rp-title {
+  font-size: calc(var(--rp-font-size) * 2);
+  color: #4d4f7a;
+}
+
+.rp-pastel-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+}
+
+.rp-pastel-card {
+  background: #ffffff;
+  border-radius: 16px;
+  padding: 14px 15px;
+  box-shadow: 0 4px 10px -4px rgba(77, 79, 122, 0.25);
+}
+
+.rp-pastel-content {
+  font-size: var(--rp-font-size);
+  line-height: 1.4;
+  margin: 0 0 8px;
+  color: #3d3f63;
+  word-break: keep-all;
+}
+
+.rp-pastel-from {
+  font-size: calc(var(--rp-font-size) * 0.85);
+  text-align: right;
+  margin: 0;
+  color: #8f7bd6;
+  font-weight: 700;
+}

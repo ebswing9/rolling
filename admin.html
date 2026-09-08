@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>롤링페이퍼 관리자</title>
+<link rel="stylesheet" href="app.css" />
+<link rel="stylesheet" href="pdf-templates.css" />
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+</head>
+<body>
+<div class="rp-shell wide">
+  <div class="rp-brand">
+    <span class="mark">🗂️</span>
+    <h1>롤링페이퍼 관리자</h1>
+    <span class="sub">교사용</span>
+  </div>
+
+  <div class="rp-toggle-line">
+    <div>
+      <strong>학생 작성 기간</strong>
+      <p>켜져 있는 동안에만 학생들이 롤링페이퍼를 작성할 수 있어요.</p>
+    </div>
+    <button class="rp-switch" id="openSwitch"></button>
+  </div>
+
+  <div class="rp-tabs">
+    <button class="rp-tab active" data-tab="roster">명단 관리</button>
+    <button class="rp-tab" data-tab="byWriter">작성자별 모아보기</button>
+    <button class="rp-tab" data-tab="byRecipient">수신자별 모아보기</button>
+    <button class="rp-tab" data-tab="pdf">PDF 내보내기</button>
+  </div>
+
+  <!-- 명단 관리 -->
+  <div class="rp-panel active" id="panel-roster">
+    <div class="rp-card-box" style="margin-bottom:16px;">
+      <div class="rp-row">
+        <input type="text" id="newStudentName" placeholder="학생 이름 입력" style="flex:1; border:1.5px solid var(--rp-line); border-radius:12px; padding:11px 13px; font-size:15px;" />
+        <button class="rp-btn primary" id="addStudentBtn">추가</button>
+      </div>
+    </div>
+    <div class="rp-card-box">
+      <table class="rp-table" id="rosterTable">
+        <thead>
+          <tr><th>이름</th><th>비밀번호 설정 여부</th><th></th></tr>
+        </thead>
+        <tbody id="rosterTableBody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- 작성자별 모아보기 -->
+  <div class="rp-panel" id="panel-byWriter">
+    <div class="rp-card-box">
+      <div class="rp-field">
+        <label>학생 선택 (작성자)</label>
+        <select id="writerSelect"></select>
+      </div>
+      <div id="writerResult"></div>
+    </div>
+  </div>
+
+  <!-- 수신자별 모아보기 -->
+  <div class="rp-panel" id="panel-byRecipient">
+    <div class="rp-card-box">
+      <div class="rp-field">
+        <label>학생 선택 (수신자)</label>
+        <select id="recipientSelect"></select>
+      </div>
+      <div id="recipientResult"></div>
+    </div>
+  </div>
+
+  <!-- PDF 내보내기 -->
+  <div class="rp-panel" id="panel-pdf">
+    <div class="rp-card-box" style="margin-bottom:16px;">
+      <div class="rp-field">
+        <label>디자인 템플릿</label>
+        <select id="templateSelect"></select>
+      </div>
+      <div class="rp-field">
+        <label>작성자 이름 표시</label>
+        <select id="nameDisplaySelect">
+          <option value="real">실명 표시</option>
+          <option value="anon">전체 익명 처리</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="rp-card-box" style="margin-bottom:16px;">
+      <h3 style="margin-top:0; font-size:15px;">개별 학생 PDF 다운로드</h3>
+      <div class="rp-row">
+        <select id="pdfSingleSelect" style="flex:1; border:1.5px solid var(--rp-line); border-radius:12px; padding:11px 13px; font-size:15px;"></select>
+        <button class="rp-btn primary" id="pdfSingleBtn">다운로드</button>
+      </div>
+      <p class="rp-error" id="pdfSingleStatus" style="color:var(--rp-ink-soft);"></p>
+    </div>
+
+    <div class="rp-card-box">
+      <h3 style="margin-top:0; font-size:15px;">반 전체 일괄 내보내기</h3>
+      <p style="font-size:13px; color:var(--rp-ink-soft); margin-top:0;">받은 메시지가 있는 학생들을 모아 학생별로 페이지가 이어지는 PDF 한 개로 만들어요.</p>
+      <button class="rp-btn sage block" id="pdfBatchBtn">전체 일괄 다운로드</button>
+      <p class="rp-error" id="pdfBatchStatus" style="color:var(--rp-ink-soft);"></p>
+    </div>
+  </div>
+</div>
+
+<script type="module">
+import {
+  watchIsOpen,
+  setIsOpen,
+  watchRoster,
+  addStudent,
+  removeStudent,
+  hasPassword,
+  resetPassword,
+  getWrittenBy,
+  getMessage,
+  getMessagesFor,
+} from "./rolling-common.js";
+import { TEMPLATES, exportSingle, exportBatch } from "./pdf-export.js";
+
+const $ = (id) => document.getElementById(id);
+let roster = {};
+let isOpenState = false;
+
+// ---------- 탭 전환 ----------
+document.querySelectorAll(".rp-tab").forEach((tab) => {
+  tab.onclick = () => {
+    document.querySelectorAll(".rp-tab").forEach((t) => t.classList.remove("active"));
+    document.querySelectorAll(".rp-panel").forEach((p) => p.classList.remove("active"));
+    tab.classList.add("active");
+    $(`panel-${tab.dataset.tab}`).classList.add("active");
+  };
+});
+
+// ---------- 작성 기간 토글 ----------
+watchIsOpen((isOpen) => {
+  isOpenState = isOpen;
+  $("openSwitch").classList.toggle("on", isOpen);
+});
+$("openSwitch").onclick = async () => {
+  await setIsOpen(!isOpenState);
+};
+
+// ---------- 명단 실시간 반영 ----------
+watchRoster(async (r) => {
+  roster = r;
+  await renderRosterTable();
+  renderSelect($("writerSelect"), roster);
+  renderSelect($("recipientSelect"), roster);
+  renderSelect($("pdfSingleSelect"), roster);
+});
+
+function renderSelect(selectEl, r) {
+  const prev = selectEl.value;
+  selectEl.innerHTML = Object.entries(r)
+    .sort((a, b) => a[1].name.localeCompare(b[1].name, "ko"))
+    .map(([id, s]) => `<option value="${id}">${s.name}</option>`)
+    .join("");
+  if (prev && r[prev]) selectEl.value = prev;
+}
+
+async function renderRosterTable() {
+  const rows = await Promise.all(
+    Object.entries(roster)
+      .sort((a, b) => a[1].name.localeCompare(b[1].name, "ko"))
+      .map(async ([id, s]) => {
+        const has = await hasPassword(id);
+        return `<tr>
+          <td>${s.name}</td>
+          <td>${has ? "✅ 설정됨" : "미설정"}</td>
+          <td>
+            <button class="rp-btn ghost rp-mini" data-action="reset" data-id="${id}">비밀번호 초기화</button>
+            <button class="rp-btn ghost rp-mini" data-action="remove" data-id="${id}">삭제</button>
+          </td>
+        </tr>`;
+      })
+  );
+  $("rosterTableBody").innerHTML = rows.join("");
+  $("rosterTableBody").querySelectorAll("button[data-action]").forEach((btn) => {
+    btn.onclick = async () => {
+      const id = btn.dataset.id;
+      if (btn.dataset.action === "reset") {
+        await resetPassword(id);
+        alert(`${roster[id].name} 학생의 비밀번호가 초기화되었습니다. 다음 접속 때 새로 설정하게 됩니다.`);
+        renderRosterTable();
+      } else if (btn.dataset.action === "remove") {
+        if (confirm(`${roster[id].name} 학생을 명단과 관련 데이터에서 삭제할까요?`)) {
+          await removeStudent(id);
+        }
+      }
+    };
+  });
+}
+
+$("addStudentBtn").onclick = async () => {
+  const name = $("newStudentName").value.trim();
+  if (!name) return;
+  await addStudent(name);
+  $("newStudentName").value = "";
+};
+
+// ---------- 작성자별 모아보기 ----------
+$("writerSelect").onchange = renderWriterResult;
+watchRoster(() => renderWriterResult()); // 명단 바뀔 때도 갱신
+
+async function renderWriterResult() {
+  const fromId = $("writerSelect").value;
+  if (!fromId || !roster[fromId]) return;
+  const written = await getWrittenBy(fromId);
+  const others = Object.entries(roster).filter(([id]) => id !== fromId);
+  const items = await Promise.all(
+    others
+      .sort((a, b) => a[1].name.localeCompare(b[1].name, "ko"))
+      .map(async ([toId, s]) => {
+        const done = !!written[toId];
+        let preview = "";
+        if (done) {
+          const msg = await getMessage(fromId, toId);
+          preview = msg ? `<div class="rp-msg-preview"><div class="content">${escapeHtml(msg.content)}</div></div>` : "";
+        }
+        return `<div class="rp-roster-item ${done ? "done" : ""}" style="cursor:default;">
+          <span>${s.name}</span>
+          <span class="rp-badge ${done ? "done" : "todo"}">${done ? "작성함" : "미작성"}</span>
+        </div>${preview}`;
+      })
+  );
+  $("writerResult").innerHTML = `<div class="rp-roster-list">${items.join("")}</div>`;
+}
+
+// ---------- 수신자별 모아보기 ----------
+$("recipientSelect").onchange = renderRecipientResult;
+
+async function renderRecipientResult() {
+  const toId = $("recipientSelect").value;
+  if (!toId || !roster[toId]) return;
+  const messages = await getMessagesFor(toId);
+  const entries = Object.entries(messages);
+  if (entries.length === 0) {
+    $("recipientResult").innerHTML = `<div class="rp-empty">아직 받은 메시지가 없어요.</div>`;
+    return;
+  }
+  $("recipientResult").innerHTML = entries
+    .map(([fromId, m]) => {
+      const fromName = roster[fromId] ? roster[fromId].name : "(삭제된 학생)";
+      return `<div class="rp-msg-preview">
+        <div class="from">${fromName}</div>
+        <div class="content">${escapeHtml(m.content)}</div>
+      </div>`;
+    })
+    .join("");
+}
+
+function escapeHtml(str) {
+  return String(str).replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;");
+}
+
+// ---------- PDF 내보내기 ----------
+$("templateSelect").innerHTML = Object.entries(TEMPLATES)
+  .map(([key, t]) => `<option value="${key}">${t.label}</option>`)
+  .join("");
+
+async function buildEntries(toId) {
+  const messages = await getMessagesFor(toId);
+  const anon = $("nameDisplaySelect").value === "anon";
+  return Object.entries(messages).map(([fromId, m]) => ({
+    fromName: anon ? null : roster[fromId] ? roster[fromId].name : "익명",
+    content: m.content,
+  }));
+}
+
+$("pdfSingleBtn").onclick = async () => {
+  const toId = $("pdfSingleSelect").value;
+  if (!toId) return;
+  $("pdfSingleStatus").textContent = "PDF 생성 중...";
+  try {
+    const entries = await buildEntries(toId);
+    const toName = roster[toId].name;
+    await exportSingle(toName, entries, $("templateSelect").value, `롤링페이퍼_${toName}.pdf`);
+    $("pdfSingleStatus").textContent = "";
+  } catch (e) {
+    console.error(e);
+    $("pdfSingleStatus").textContent = "생성 중 오류가 발생했어요.";
+  }
+};
+
+$("pdfBatchBtn").onclick = async () => {
+  $("pdfBatchStatus").textContent = "전체 PDF 생성 중... (인원이 많으면 시간이 걸릴 수 있어요)";
+  try {
+    const list = await Promise.all(
+      Object.entries(roster)
+        .sort((a, b) => a[1].name.localeCompare(b[1].name, "ko"))
+        .map(async ([id, s]) => ({ name: s.name, entries: await buildEntries(id) }))
+    );
+    await exportBatch(list, $("templateSelect").value, "롤링페이퍼_전체.pdf");
+    $("pdfBatchStatus").textContent = "";
+  } catch (e) {
+    console.error(e);
+    $("pdfBatchStatus").textContent = "생성 중 오류가 발생했어요.";
+  }
+};
+</script>
+</body>
+</html>
