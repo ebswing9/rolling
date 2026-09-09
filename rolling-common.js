@@ -44,6 +44,25 @@ export async function addStudent(name) {
   return newRef.key;
 }
 
+export async function addStudentsBulk(names) {
+  const existing = await getRoster();
+  const existingNames = new Set(Object.values(existing).map((s) => s.name));
+  const updates = {};
+  let added = 0;
+  names.forEach((rawName) => {
+    const name = rawName.trim();
+    if (!name || existingNames.has(name)) return;
+    const newRef = push(ref(db, `${ROOT}/roster`));
+    updates[`${ROOT}/roster/${newRef.key}`] = { name };
+    existingNames.add(name);
+    added += 1;
+  });
+  if (Object.keys(updates).length > 0) {
+    await update(ref(db), updates);
+  }
+  return added;
+}
+
 export async function removeStudent(studentId) {
   await remove(ref(db, `${ROOT}/roster/${studentId}`));
   await remove(ref(db, `${ROOT}/auth/${studentId}`));

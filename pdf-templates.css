@@ -48,6 +48,9 @@
   border-radius: 10px;
   padding: 16px 18px;
   box-shadow: 0 8px 14px -6px rgba(155, 100, 150, 0.28);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
 }
 
 .rp-note-content {
@@ -56,11 +59,12 @@
   margin: 0 0 10px;
   color: #5b4363;
   word-break: keep-all;
+  text-align: center;
 }
 
 .rp-note-from {
   font-size: calc(var(--rp-font-size) * 0.85);
-  text-align: right;
+  text-align: center;
   margin: 0;
   color: #8a6b8f;
   font-weight: 700;

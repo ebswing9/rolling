@@ -5,7 +5,7 @@
    - 팔레트: 라벤더 배경 + 버블검 핑크 & 라일락 그라데이션 포인트
 */
 
-@import url("https://fonts.googleapis.com/css2?family=Jua&family=Gowun+Dodum&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Jua&family=Gaegu:wght@400;700&family=Gowun+Dodum&display=swap");
 
 :root {
   --rp-bg-1: #fdf2fb;
@@ -16,8 +16,9 @@
   --rp-pink-deep: #ff7aac;
   --rp-lilac: #b79cff;
   --rp-lilac-deep: #9c7bff;
-  --rp-mint: #7fe0c3;
-  --rp-mint-deep: #56cba9;
+  --rp-rose-text: #d94f85;
+  --rp-mint: #ffb0d2;
+  --rp-mint-deep: #ff5f9e;
   --rp-yellow: #ffe08a;
   --rp-card: #fffdfe;
   --rp-line: #f3ddef;
@@ -27,7 +28,7 @@
   --rp-shadow: 0 14px 30px -14px rgba(183, 118, 200, 0.35);
   --rp-shadow-sm: 0 6px 16px -8px rgba(183, 118, 200, 0.35);
   --grad-main: linear-gradient(135deg, var(--rp-pink) 0%, var(--rp-lilac) 100%);
-  --grad-mint: linear-gradient(135deg, #a9f4d8 0%, var(--rp-mint) 100%);
+  --grad-mint: linear-gradient(135deg, #ffd6e9 0%, var(--rp-mint-deep) 100%);
 }
 
 * {
@@ -37,7 +38,7 @@
 body {
   margin: 0;
   min-height: 100vh;
-  font-family: "Gowun Dodum", sans-serif;
+  font-family: "Gaegu", "Gowun Dodum", sans-serif;
   color: var(--rp-ink);
   background:
     radial-gradient(circle at 8% -5%, #ffe7f5 0%, transparent 45%),
@@ -103,7 +104,7 @@ body {
   display: block;
   font-size: 13px;
   font-weight: 700;
-  color: var(--rp-lilac-deep);
+  color: var(--rp-rose-text);
   margin-bottom: 7px;
 }
 
@@ -126,7 +127,8 @@ body {
 select.rp-input {
   appearance: none;
   -webkit-appearance: none;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='9' viewBox='0 0 14 9'%3E%3Cpath d='M1 1l6 6 6-6' stroke='%23b79cff' stroke-width='2' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  font-weight: 700;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='9' viewBox='0 0 14 9'%3E%3Cpath d='M1 1l6 6 6-6' stroke='%23ff8fc0' stroke-width='2' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
   background-repeat: no-repeat;
   background-position: right 16px center;
   padding-right: 40px;
@@ -196,19 +198,19 @@ select.rp-input {
 
 .rp-btn.ghost:hover {
   border-color: var(--rp-lilac);
-  color: var(--rp-lilac-deep);
+  color: var(--rp-rose-text);
   transform: translateY(-1px);
 }
 
 .rp-btn.sage {
   background: var(--grad-mint);
-  color: #245e4a;
-  box-shadow: 0 8px 18px -6px rgba(86, 203, 169, 0.5);
+  color: #8a1249;
+  box-shadow: 0 8px 18px -6px rgba(255, 95, 158, 0.45);
 }
 
 .rp-btn.sage:hover {
   transform: translateY(-2px);
-  box-shadow: 0 12px 22px -6px rgba(86, 203, 169, 0.6);
+  box-shadow: 0 12px 22px -6px rgba(255, 95, 158, 0.55);
 }
 
 .rp-btn:active {
@@ -285,18 +287,18 @@ select.rp-input {
 
 .rp-badge.done {
   background: var(--grad-mint);
-  color: #245e4a;
+  color: #8a1249;
 }
 
 .rp-badge.todo {
   background: #f4ecfa;
-  color: var(--rp-lilac-deep);
+  color: var(--rp-rose-text);
 }
 
 .rp-progress {
   font-size: 14px;
   font-weight: 700;
-  color: var(--rp-lilac-deep);
+  color: var(--rp-rose-text);
   margin-bottom: 18px;
 }
 
@@ -366,7 +368,7 @@ select.rp-input {
 
 .rp-tab:hover {
   border-color: var(--rp-lilac);
-  color: var(--rp-lilac-deep);
+  color: var(--rp-rose-text);
 }
 
 .rp-tab.active {
@@ -472,7 +474,7 @@ table.rp-table td {
 }
 
 table.rp-table th {
-  color: var(--rp-lilac-deep);
+  color: var(--rp-rose-text);
   font-size: 12px;
   font-weight: 700;
 }
@@ -525,4 +527,53 @@ table.rp-table tr:hover td {
   font-size: 16px;
   color: var(--rp-ink);
   margin: 0 0 14px;
+}
+
+/* 이름 검색 콤보박스 (학생 수가 많을 때 드롭다운 대신 사용) */
+.rp-combo {
+  position: relative;
+}
+
+.rp-combo-list {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: calc(100% + 6px);
+  background: #fff;
+  border: 2px solid var(--rp-pink);
+  border-radius: var(--rp-radius-sm);
+  box-shadow: var(--rp-shadow);
+  max-height: 240px;
+  overflow-y: auto;
+  z-index: 10;
+  display: none;
+}
+
+.rp-combo-list.open {
+  display: block;
+}
+
+.rp-combo-item {
+  padding: 12px 16px;
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+  border-bottom: 1px solid var(--rp-line-soft);
+}
+
+.rp-combo-item:last-child {
+  border-bottom: none;
+}
+
+.rp-combo-item:hover,
+.rp-combo-item.active {
+  background: linear-gradient(135deg, #fff0f6, #f7f0ff);
+  color: var(--rp-pink-deep);
+}
+
+.rp-combo-empty {
+  padding: 14px 16px;
+  font-size: 14px;
+  color: var(--rp-ink-soft);
+  text-align: center;
 }

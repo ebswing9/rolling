@@ -23,10 +23,13 @@
   <!-- 이름 선택 화면 -->
   <div id="selectNameView" class="rp-card-box" style="display:none;">
     <div class="rp-field">
-      <label>내 이름을 선택하세요</label>
-      <select id="nameSelect"></select>
+      <label>내 이름을 검색해서 선택하세요</label>
+      <div class="rp-combo">
+        <input type="text" id="nameSearchInput" class="rp-input" placeholder="이름을 입력해보세요" autocomplete="off" />
+        <div class="rp-combo-list" id="nameComboList"></div>
+      </div>
     </div>
-    <button class="rp-btn primary block" id="selectNameBtn">다음</button>
+    <button class="rp-btn primary block" id="selectNameBtn" disabled>다음</button>
     <p class="rp-error" id="selectNameError"></p>
   </div>
 
@@ -112,6 +115,7 @@ let roster = {};          // { id: { name } }
 let currentId = null;
 let currentName = null;
 let pendingLoginId = null; // 이름 선택 후, 비밀번호 단계로 넘기기 전 임시 저장
+let selectedNameId = null; // 검색 콤보박스에서 고른 학생 id
 let writtenMap = {};
 let unsubWritten = null;
 
@@ -137,21 +141,63 @@ watchIsOpen(async (isOpen) => {
   if (savedId && roster[savedId]) {
     enterRoster(savedId, roster[savedId].name);
   } else {
-    renderNameSelect();
+    resetNameSearch();
     showOnly("selectNameView");
   }
 });
 
-function renderNameSelect() {
-  const sel = $("nameSelect");
-  sel.innerHTML = Object.entries(roster)
-    .sort((a, b) => a[1].name.localeCompare(b[1].name, "ko"))
-    .map(([id, s]) => `<option value="${id}">${s.name}</option>`)
-    .join("");
+// ---------- 이름 검색 콤보박스 ----------
+function resetNameSearch() {
+  selectedNameId = null;
+  $("nameSearchInput").value = "";
+  $("selectNameBtn").disabled = true;
+  $("selectNameError").textContent = "";
+  renderComboList("");
 }
 
+function renderComboList(filterText) {
+  const list = $("nameComboList");
+  const keyword = filterText.trim();
+  const matches = Object.entries(roster)
+    .filter(([, s]) => !keyword || s.name.includes(keyword))
+    .sort((a, b) => a[1].name.localeCompare(b[1].name, "ko"));
+
+  if (matches.length === 0) {
+    list.innerHTML = `<div class="rp-combo-empty">일치하는 이름이 없어요</div>`;
+  } else {
+    list.innerHTML = matches
+      .map(([id, s]) => `<div class="rp-combo-item" data-id="${id}">${s.name}</div>`)
+      .join("");
+    list.querySelectorAll(".rp-combo-item").forEach((el) => {
+      el.onmousedown = (e) => {
+        e.preventDefault(); // input blur보다 먼저 선택되도록
+        selectedNameId = el.dataset.id;
+        $("nameSearchInput").value = roster[selectedNameId].name;
+        $("selectNameBtn").disabled = false;
+        list.classList.remove("open");
+      };
+    });
+  }
+}
+
+$("nameSearchInput").addEventListener("input", (e) => {
+  selectedNameId = null;
+  $("selectNameBtn").disabled = true;
+  renderComboList(e.target.value);
+  $("nameComboList").classList.add("open");
+});
+
+$("nameSearchInput").addEventListener("focus", () => {
+  renderComboList($("nameSearchInput").value);
+  $("nameComboList").classList.add("open");
+});
+
+$("nameSearchInput").addEventListener("blur", () => {
+  setTimeout(() => $("nameComboList").classList.remove("open"), 100);
+});
+
 $("selectNameBtn").onclick = async () => {
-  const id = $("nameSelect").value;
+  const id = selectedNameId;
   if (!id) return;
   pendingLoginId = id;
   const already = await hasPassword(id);
@@ -267,7 +313,7 @@ $("logoutBtn").onclick = () => {
   sessionStorage.removeItem("rp_studentId");
   if (unsubWritten) unsubWritten();
   currentId = null;
-  renderNameSelect();
+  resetNameSearch();
   showOnly("selectNameView");
 };
 
