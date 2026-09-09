@@ -22,11 +22,17 @@ function escapeHtml(str) {
 }
 
 function buildPostit(toName, entries) {
-  const colors = ["#FFE1EC", "#FFF1C9", "#E3E0FF", "#D9F5E6", "#DCEEFF", "#FFE4D6"];
+  // 처음 마음에 들어했던 핑크(#FFE1EC, hsl(344, 100%, 92%)) 한 톤을 기준으로
+  // 채도(85~100%)와 밝기(87~94%)만 살짝씩 바꿔가며 변주를 줍니다.
+  const baseHue = 344;
+  const satOptions = [88, 96, 100, 92];
+  const lightOptions = [90, 87, 93, 89, 91];
   const notes = entries
     .map((e, i) => {
       const rot = ((i % 5) - 2) * 1.4; // -2.8 ~ 2.8도
-      const bg = colors[i % colors.length];
+      const sat = satOptions[i % satOptions.length];
+      const light = lightOptions[i % lightOptions.length];
+      const bg = `hsl(${baseHue}, ${sat}%, ${light}%)`;
       const fromLine = e.fromName ? `<p class="rp-note-from">- ${escapeHtml(e.fromName)}</p>` : "";
       return `<div class="rp-note" style="--bg:${bg}; --rot:${rot}deg;">
         <p class="rp-note-content">${escapeHtml(e.content)}</p>

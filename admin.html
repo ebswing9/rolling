@@ -94,6 +94,14 @@
           <option value="anon">전체 익명 처리</option>
         </select>
       </div>
+      <div class="rp-field" style="display:flex; align-items:center; gap:10px; margin-bottom:10px;">
+        <input type="checkbox" id="fillMissingCheckbox" style="width:18px; height:18px; accent-color:var(--rp-pink-deep);" />
+        <label for="fillMissingCheckbox" style="margin:0; cursor:pointer;">미작성자도 같은 문구로 채워서 내보내기</label>
+      </div>
+      <div class="rp-field" id="fillMissingTextWrap" style="display:none;">
+        <label>미작성자에게 채울 문구</label>
+        <textarea id="fillMissingText" maxlength="200" placeholder="예: 항상 네가 잘 지내기를 바랄게!"></textarea>
+      </div>
     </div>
 
     <div class="rp-card-box" style="margin-bottom:16px;">
@@ -310,13 +318,30 @@ $("templateSelect").innerHTML = Object.entries(TEMPLATES)
   .map(([key, t]) => `<option value="${key}">${t.label}</option>`)
   .join("");
 
+$("fillMissingCheckbox").onchange = (e) => {
+  $("fillMissingTextWrap").style.display = e.target.checked ? "" : "none";
+};
+
 async function buildEntries(toId) {
   const messages = await getMessagesFor(toId);
   const anon = $("nameDisplaySelect").value === "anon";
-  return Object.entries(messages).map(([fromId, m]) => ({
+  const entries = Object.entries(messages).map(([fromId, m]) => ({
     fromName: anon ? null : roster[fromId] ? roster[fromId].name : "익명",
     content: m.content,
   }));
+
+  if ($("fillMissingCheckbox").checked) {
+    const fillerText = $("fillMissingText").value.trim();
+    if (fillerText) {
+      const writtenIds = new Set(Object.keys(messages));
+      Object.entries(roster)
+        .filter(([id]) => id !== toId && !writtenIds.has(id))
+        .forEach(([, s]) => {
+          entries.push({ fromName: anon ? null : s.name, content: fillerText });
+        });
+    }
+  }
+  return entries;
 }
 
 $("pdfSingleBtn").onclick = async () => {

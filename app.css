@@ -9,7 +9,7 @@
 
 :root {
   --rp-bg-1: #fdf2fb;
-  --rp-bg-2: #f2ecff;
+  --rp-bg-2: #fbeef6;
   --rp-ink: #5b4368;
   --rp-ink-soft: #a68fb3;
   --rp-pink: #ff9fc2;
@@ -17,8 +17,8 @@
   --rp-lilac: #b79cff;
   --rp-lilac-deep: #9c7bff;
   --rp-rose-text: #d94f85;
-  --rp-mint: #ffb0d2;
-  --rp-mint-deep: #ff5f9e;
+  --rp-mint: #ffcfe0;
+  --rp-mint-deep: #ff9cbd;
   --rp-yellow: #ffe08a;
   --rp-card: #fffdfe;
   --rp-line: #f3ddef;
@@ -28,7 +28,7 @@
   --rp-shadow: 0 14px 30px -14px rgba(183, 118, 200, 0.35);
   --rp-shadow-sm: 0 6px 16px -8px rgba(183, 118, 200, 0.35);
   --grad-main: linear-gradient(135deg, var(--rp-pink) 0%, var(--rp-lilac) 100%);
-  --grad-mint: linear-gradient(135deg, #ffd6e9 0%, var(--rp-mint-deep) 100%);
+  --grad-mint: linear-gradient(135deg, #ffe3ee 0%, var(--rp-mint-deep) 100%);
 }
 
 * {
@@ -38,11 +38,12 @@
 body {
   margin: 0;
   min-height: 100vh;
-  font-family: "Gaegu", "Gowun Dodum", sans-serif;
+  font-family: "Gowun Dodum", sans-serif;
+  font-size: 16px;
   color: var(--rp-ink);
   background:
     radial-gradient(circle at 8% -5%, #ffe7f5 0%, transparent 45%),
-    radial-gradient(circle at 100% 0%, #e7e0ff 0%, transparent 40%),
+    radial-gradient(circle at 100% 0%, #f5e9ff 0%, transparent 40%),
     linear-gradient(180deg, var(--rp-bg-1), var(--rp-bg-2) 70%);
   background-attachment: fixed;
 }
@@ -175,6 +176,8 @@ select.rp-input {
   font-weight: 700;
   font-family: inherit;
   cursor: pointer;
+  white-space: nowrap;
+  flex-shrink: 0;
   transition: transform 0.15s ease, box-shadow 0.15s ease, opacity 0.15s ease, filter 0.15s ease;
 }
 
@@ -204,13 +207,13 @@ select.rp-input {
 
 .rp-btn.sage {
   background: var(--grad-mint);
-  color: #8a1249;
-  box-shadow: 0 8px 18px -6px rgba(255, 95, 158, 0.45);
+  color: #b23a70;
+  box-shadow: 0 8px 18px -6px rgba(255, 156, 189, 0.5);
 }
 
 .rp-btn.sage:hover {
   transform: translateY(-2px);
-  box-shadow: 0 12px 22px -6px rgba(255, 95, 158, 0.55);
+  box-shadow: 0 12px 22px -6px rgba(255, 156, 189, 0.6);
 }
 
 .rp-btn:active {
@@ -227,6 +230,15 @@ select.rp-input {
   width: 100%;
 }
 
+.rp-row .rp-btn.block {
+  width: auto;
+  flex: 1;
+}
+
+.rp-row .rp-btn.ghost {
+  min-width: 84px;
+}
+
 .rp-error {
   color: var(--rp-pink-deep);
   font-size: 13px;
@@ -236,13 +248,14 @@ select.rp-input {
 }
 
 .rp-notice {
-  background: linear-gradient(135deg, #fff6e9, #fff0f6);
-  border: 1.5px dashed var(--rp-yellow);
+  background: linear-gradient(135deg, #fff0f6, #f6effe);
+  border: 1.5px dashed var(--rp-pink);
   border-radius: var(--rp-radius-sm);
   padding: 15px 18px;
   font-size: 14px;
-  color: #8a5a1e;
+  color: var(--rp-rose-text);
   margin-bottom: 18px;
+  font-weight: 500;
 }
 
 /* 학생 목록 */
@@ -287,7 +300,7 @@ select.rp-input {
 
 .rp-badge.done {
   background: var(--grad-mint);
-  color: #8a1249;
+  color: #b23a70;
 }
 
 .rp-badge.todo {
@@ -432,7 +445,7 @@ select.rp-input {
   width: 50px;
   height: 28px;
   border-radius: 999px;
-  background: #eee1f6;
+  background: #fbe1ec;
   border: none;
   cursor: pointer;
   flex-shrink: 0;
@@ -529,51 +542,69 @@ table.rp-table tr:hover td {
   margin: 0 0 14px;
 }
 
-/* 이름 검색 콤보박스 (학생 수가 많을 때 드롭다운 대신 사용) */
-.rp-combo {
-  position: relative;
-}
-
-.rp-combo-list {
-  position: absolute;
-  left: 0;
-  right: 0;
-  top: calc(100% + 6px);
-  background: #fff;
-  border: 2px solid var(--rp-pink);
-  border-radius: var(--rp-radius-sm);
-  box-shadow: var(--rp-shadow);
-  max-height: 240px;
+/* 이름 선택용 스크롤 목록 (학생 수가 많아도 스크롤해서 바로 클릭) */
+.rp-name-picker {
+  max-height: 380px;
   overflow-y: auto;
-  z-index: 10;
-  display: none;
+  padding-right: 4px;
 }
 
-.rp-combo-list.open {
-  display: block;
+/* 작성 화면을 더 아기자기하게 꾸미기 */
+.rp-write-card {
+  position: relative;
+  overflow: visible;
+  background: linear-gradient(160deg, #fffdfe 0%, #fff5fa 60%, #fbf3ff 100%);
+  border: 2px solid var(--rp-line);
 }
 
-.rp-combo-item {
-  padding: 12px 16px;
-  font-size: 15px;
-  font-weight: 700;
-  cursor: pointer;
-  border-bottom: 1px solid var(--rp-line-soft);
+.rp-write-card::before {
+  content: "✨";
+  position: absolute;
+  top: -16px;
+  left: -8px;
+  font-size: 26px;
+  transform: rotate(-14deg);
 }
 
-.rp-combo-item:last-child {
-  border-bottom: none;
+.rp-write-card::after {
+  content: "🎀";
+  position: absolute;
+  bottom: -14px;
+  right: -6px;
+  font-size: 26px;
+  transform: rotate(12deg);
 }
 
-.rp-combo-item:hover,
-.rp-combo-item.active {
-  background: linear-gradient(135deg, #fff0f6, #f7f0ff);
-  color: var(--rp-pink-deep);
-}
-
-.rp-combo-empty {
-  padding: 14px 16px;
-  font-size: 14px;
-  color: var(--rp-ink-soft);
+.rp-write-banner {
   text-align: center;
+  margin-bottom: 22px;
+  padding-bottom: 18px;
+  border-bottom: 2px dashed var(--rp-line);
+}
+
+.rp-write-heart {
+  display: block;
+  font-size: 30px;
+  margin-bottom: 8px;
+}
+
+.rp-write-to {
+  font-family: "Jua", sans-serif;
+  font-size: 19px;
+  color: var(--rp-pink-deep);
+  margin: 0;
+}
+
+.rp-write-to b {
+  color: var(--rp-ink);
+}
+
+.rp-write-card textarea {
+  border: 2px dashed var(--rp-pink) !important;
+  background: linear-gradient(180deg, #fffefe, #fff8fb) !important;
+  border-radius: 20px !important;
+}
+
+.rp-write-card textarea:focus {
+  border-style: solid !important;
 }
