@@ -22,20 +22,20 @@ function escapeHtml(str) {
 }
 
 function buildPostit(toName, entries) {
-  const colors = ["#FFF3B0", "#FFD6E8", "#C9F0FF", "#D8F5D0", "#E6D9FF", "#FFE3C2"];
+  const colors = ["#FFE1EC", "#FFF1C9", "#E3E0FF", "#D9F5E6", "#DCEEFF", "#FFE4D6"];
   const notes = entries
     .map((e, i) => {
-      const rot = (i % 5) - 2; // -2 ~ 2도
+      const rot = ((i % 5) - 2) * 1.4; // -2.8 ~ 2.8도
       const bg = colors[i % colors.length];
-      const name = e.fromName ? escapeHtml(e.fromName) : "익명";
+      const fromLine = e.fromName ? `<p class="rp-note-from">- ${escapeHtml(e.fromName)}</p>` : "";
       return `<div class="rp-note" style="--bg:${bg}; --rot:${rot}deg;">
         <p class="rp-note-content">${escapeHtml(e.content)}</p>
-        <p class="rp-note-from">- ${name}</p>
+        ${fromLine}
       </div>`;
     })
     .join("");
   return `<div class="rp-page rp-postit">
-    <h1 class="rp-title">${escapeHtml(toName)}에게</h1>
+    <h1 class="rp-title">${escapeHtml(toName)}에게 💌</h1>
     <div class="rp-note-grid">${notes}</div>
   </div>`;
 }
@@ -43,10 +43,10 @@ function buildPostit(toName, entries) {
 function buildGrid(toName, entries) {
   const cards = entries
     .map((e) => {
-      const name = e.fromName ? escapeHtml(e.fromName) : "익명";
+      const fromLine = e.fromName ? `<p class="rp-card-from">${escapeHtml(e.fromName)}</p>` : "";
       return `<div class="rp-card">
         <p class="rp-card-content">${escapeHtml(e.content)}</p>
-        <p class="rp-card-from">${name}</p>
+        ${fromLine}
       </div>`;
     })
     .join("");
@@ -59,10 +59,10 @@ function buildGrid(toName, entries) {
 function buildLetter(toName, entries) {
   const items = entries
     .map((e) => {
-      const name = e.fromName ? escapeHtml(e.fromName) : "익명";
+      const fromLine = e.fromName ? `<p class="rp-letter-from">from. ${escapeHtml(e.fromName)}</p>` : "";
       return `<div class="rp-letter-item">
         <p class="rp-letter-content">${escapeHtml(e.content)}</p>
-        <p class="rp-letter-from">from. ${name}</p>
+        ${fromLine}
       </div>`;
     })
     .join("");
@@ -75,15 +75,15 @@ function buildLetter(toName, entries) {
 function buildPastel(toName, entries) {
   const cards = entries
     .map((e) => {
-      const name = e.fromName ? escapeHtml(e.fromName) : "익명";
+      const fromLine = e.fromName ? `<p class="rp-pastel-from">${escapeHtml(e.fromName)}</p>` : "";
       return `<div class="rp-pastel-card">
         <p class="rp-pastel-content">${escapeHtml(e.content)}</p>
-        <p class="rp-pastel-from">${name}</p>
+        ${fromLine}
       </div>`;
     })
     .join("");
   return `<div class="rp-page rp-pastel">
-    <h1 class="rp-title">${escapeHtml(toName)} 🎓</h1>
+    <h1 class="rp-title">${escapeHtml(toName)} 🎀</h1>
     <div class="rp-pastel-grid">${cards}</div>
   </div>`;
 }
@@ -114,6 +114,7 @@ async function renderToCanvas(html) {
   host.innerHTML = html;
   const page = host.querySelector(".rp-page");
   page.style.setProperty("--rp-font-size", `${START_FONT_PX}px`);
+  page.style.boxSizing = "border-box";
 
   let fontSize = START_FONT_PX;
   const maxHeight = PAGE_H * MAX_PAGES;
@@ -123,10 +124,19 @@ async function renderToCanvas(html) {
     page.style.setProperty("--rp-font-size", `${fontSize}px`);
   }
 
+  // 실제 내용 높이만큼만 렌더링하면, 배경색/그라데이션이 내용 끝에서
+  // 뚝 끊기고 그 아래는 PDF의 기본 흰 배경이 드러나 보입니다.
+  // 그래서 항상 A4 페이지 높이의 정배수로 컨테이너 높이를 강제로 늘려서
+  // 템플릿 배경이 페이지 끝까지 꽉 채워지도록 만듭니다.
+  const neededPages = Math.min(MAX_PAGES, Math.max(1, Math.ceil(page.scrollHeight / PAGE_H)));
+  page.style.height = `${neededPages * PAGE_H}px`;
+  page.style.overflow = "hidden";
+
   const canvas = await html2canvas(page, {
     scale: RENDER_SCALE,
     backgroundColor: "#ffffff",
     windowWidth: PAGE_W,
+    height: neededPages * PAGE_H,
   });
   document.body.removeChild(host);
   return canvas;
@@ -134,27 +144,23 @@ async function renderToCanvas(html) {
 
 function sliceCanvasIntoPages(canvas) {
   const pxPerPage = PAGE_H * RENDER_SCALE;
-  const totalPages = Math.min(MAX_PAGES, Math.max(1, Math.ceil(canvas.height / pxPerPage)));
+  const totalPages = Math.max(1, Math.round(canvas.height / pxPerPage));
   const pages = [];
   for (let i = 0; i < totalPages; i++) {
-    const sliceHeight = Math.min(pxPerPage, canvas.height - i * pxPerPage);
-    if (sliceHeight <= 0) break;
     const pageCanvas = document.createElement("canvas");
     pageCanvas.width = canvas.width;
-    pageCanvas.height = sliceHeight;
+    pageCanvas.height = pxPerPage;
     const ctx = pageCanvas.getContext("2d");
-    ctx.fillStyle = "#ffffff";
-    ctx.fillRect(0, 0, pageCanvas.width, pageCanvas.height);
     ctx.drawImage(
       canvas,
       0,
       i * pxPerPage,
       canvas.width,
-      sliceHeight,
+      pxPerPage,
       0,
       0,
       canvas.width,
-      sliceHeight
+      pxPerPage
     );
     pages.push(pageCanvas);
   }
@@ -172,7 +178,7 @@ export async function exportSingle(toName, entries, templateKey, filename) {
   const pages = sliceCanvasIntoPages(canvas);
   pages.forEach((pageCanvas, i) => {
     if (i > 0) doc.addPage([PAGE_W, PAGE_H]);
-    doc.addImage(pageCanvas.toDataURL("image/jpeg", 0.92), "JPEG", 0, 0, PAGE_W, (pageCanvas.height / RENDER_SCALE));
+    doc.addImage(pageCanvas.toDataURL("image/jpeg", 0.95), "JPEG", 0, 0, PAGE_W, PAGE_H);
   });
   doc.save(filename);
 }
@@ -193,7 +199,7 @@ export async function exportBatch(studentsWithEntries, templateKey, filename) {
     pages.forEach((pageCanvas) => {
       if (!first) doc.addPage([PAGE_W, PAGE_H]);
       first = false;
-      doc.addImage(pageCanvas.toDataURL("image/jpeg", 0.92), "JPEG", 0, 0, PAGE_W, (pageCanvas.height / RENDER_SCALE));
+      doc.addImage(pageCanvas.toDataURL("image/jpeg", 0.95), "JPEG", 0, 0, PAGE_W, PAGE_H);
     });
   }
   doc.save(filename);

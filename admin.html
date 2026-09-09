@@ -36,7 +36,7 @@
   <div class="rp-panel active" id="panel-roster">
     <div class="rp-card-box" style="margin-bottom:16px;">
       <div class="rp-row">
-        <input type="text" id="newStudentName" placeholder="학생 이름 입력" style="flex:1; border:1.5px solid var(--rp-line); border-radius:12px; padding:11px 13px; font-size:15px;" />
+        <input type="text" id="newStudentName" class="rp-input" placeholder="학생 이름 입력" style="flex:1;" />
         <button class="rp-btn primary" id="addStudentBtn">추가</button>
       </div>
     </div>
@@ -89,19 +89,19 @@
     </div>
 
     <div class="rp-card-box" style="margin-bottom:16px;">
-      <h3 style="margin-top:0; font-size:15px;">개별 학생 PDF 다운로드</h3>
+      <h3 class="rp-panel-heading">📄 개별 학생 PDF 다운로드</h3>
       <div class="rp-row">
-        <select id="pdfSingleSelect" style="flex:1; border:1.5px solid var(--rp-line); border-radius:12px; padding:11px 13px; font-size:15px;"></select>
+        <select id="pdfSingleSelect" class="rp-input" style="flex:1;"></select>
         <button class="rp-btn primary" id="pdfSingleBtn">다운로드</button>
       </div>
-      <p class="rp-error" id="pdfSingleStatus" style="color:var(--rp-ink-soft);"></p>
+      <p class="rp-error" id="pdfSingleStatus" style="color:var(--rp-ink-soft); font-weight:500;"></p>
     </div>
 
     <div class="rp-card-box">
-      <h3 style="margin-top:0; font-size:15px;">반 전체 일괄 내보내기</h3>
+      <h3 class="rp-panel-heading">📦 반 전체 일괄 내보내기</h3>
       <p style="font-size:13px; color:var(--rp-ink-soft); margin-top:0;">받은 메시지가 있는 학생들을 모아 학생별로 페이지가 이어지는 PDF 한 개로 만들어요.</p>
       <button class="rp-btn sage block" id="pdfBatchBtn">전체 일괄 다운로드</button>
-      <p class="rp-error" id="pdfBatchStatus" style="color:var(--rp-ink-soft);"></p>
+      <p class="rp-error" id="pdfBatchStatus" style="color:var(--rp-ink-soft); font-weight:500;"></p>
     </div>
   </div>
 </div>

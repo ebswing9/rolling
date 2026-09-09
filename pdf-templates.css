@@ -1,57 +1,60 @@
 /* pdf-templates.css
    PDF로 렌더링될 4가지 롤링페이퍼 디자인 템플릿.
    .rp-page 안의 --rp-font-size 변수는 pdf-export.js가 자동으로
-   조절하여 A4 2페이지 안에 맞춥니다. */
+   조절하여 A4 2페이지 안에 맞춥니다. 컨테이너 높이도 자동으로
+   A4 페이지의 정배수로 늘어나서 배경이 페이지 끝까지 채워집니다. */
 
-@import url("https://fonts.googleapis.com/css2?family=Gaegu:wght@400;700&family=Noto+Sans+KR:wght@400;500;700;900&family=Noto+Serif+KR:wght@400;600&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Jua&family=Gaegu:wght@400;700&family=Gowun+Dodum&display=swap");
 
 .rp-page {
   width: 794px;
-  padding: 40px 36px;
+  padding: 44px 40px;
   background: #ffffff;
   box-sizing: border-box;
   --rp-font-size: 16px;
 }
 
 .rp-page .rp-title {
-  font-weight: 900;
-  margin: 0 0 24px;
+  font-family: "Jua", sans-serif;
+  font-weight: 400;
+  margin: 0 0 26px;
   text-align: center;
 }
 
 /* ---------- 1. 포스트잇 콜라주형 ---------- */
 .rp-postit {
   font-family: "Gaegu", sans-serif;
-  background: #fffdf7;
+  background: linear-gradient(180deg, #fff6fb 0%, #f7f2ff 100%);
 }
 
 .rp-postit .rp-title {
   font-size: calc(var(--rp-font-size) * 1.9);
-  color: #4a3f2a;
+  color: #d6579b;
 }
 
 .rp-note-grid {
   display: flex;
   flex-wrap: wrap;
-  gap: 14px;
+  gap: 16px;
   justify-content: center;
+  align-content: flex-start;
 }
 
 .rp-note {
   width: 220px;
   min-height: 130px;
-  background: var(--bg, #fff3b0);
+  background: var(--bg, #ffe1ec);
   transform: rotate(var(--rot, 0deg));
-  border-radius: 4px;
-  padding: 14px 16px;
-  box-shadow: 0 6px 10px -4px rgba(0, 0, 0, 0.18);
+  border-radius: 10px;
+  padding: 16px 18px;
+  box-shadow: 0 8px 14px -6px rgba(155, 100, 150, 0.28);
 }
 
 .rp-note-content {
   font-size: var(--rp-font-size);
-  line-height: 1.35;
+  line-height: 1.4;
   margin: 0 0 10px;
-  color: #3a3323;
+  color: #5b4363;
   word-break: keep-all;
 }
 
@@ -59,60 +62,61 @@
   font-size: calc(var(--rp-font-size) * 0.85);
   text-align: right;
   margin: 0;
-  color: #5a5030;
+  color: #8a6b8f;
   font-weight: 700;
 }
 
 /* ---------- 2. 카드 그리드형 ---------- */
 .rp-grid {
-  font-family: "Noto Sans KR", sans-serif;
+  font-family: "Gowun Dodum", sans-serif;
+  background: #fffcfe;
 }
 
 .rp-grid .rp-title {
   font-size: calc(var(--rp-font-size) * 1.7);
-  color: #2b2e4a;
-  border-bottom: 3px solid #2b2e4a;
-  padding-bottom: 14px;
+  color: #7a5a8a;
+  padding-bottom: 16px;
+  border-bottom: 3px dashed #f0c9e6;
 }
 
 .rp-card-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 10px;
+  gap: 12px;
 }
 
 .rp-card {
-  border: 1.5px solid #d8dbe8;
-  border-radius: 8px;
-  padding: 10px 12px;
-  background: #fafbff;
+  border: 2px solid #f4e2f2;
+  border-radius: 14px;
+  padding: 12px 14px;
+  background: #fffaff;
 }
 
 .rp-card-content {
   font-size: var(--rp-font-size);
-  line-height: 1.4;
-  margin: 0 0 8px;
+  line-height: 1.45;
+  margin: 0 0 9px;
   word-break: keep-all;
+  color: #5b4363;
 }
 
 .rp-card-from {
   font-size: calc(var(--rp-font-size) * 0.8);
   text-align: right;
   margin: 0;
-  color: #6b6f8f;
+  color: #b98ac2;
   font-weight: 700;
 }
 
 /* ---------- 3. 편지지 리스트형 ---------- */
 .rp-letter {
-  font-family: "Noto Serif KR", serif;
-  background: #fffefb;
+  font-family: "Gowun Dodum", sans-serif;
+  background: #fffdf9;
 }
 
 .rp-letter .rp-title {
   font-size: calc(var(--rp-font-size) * 2);
-  color: #3d2f22;
-  font-style: italic;
+  color: #9c6b4f;
 }
 
 .rp-letter-list {
@@ -121,53 +125,54 @@
 }
 
 .rp-letter-item {
-  padding: 12px 0;
-  border-bottom: 1px dashed #d9cdb8;
+  padding: 14px 4px;
+  border-bottom: 1.5px dashed #e8d6c4;
 }
 
 .rp-letter-content {
   font-size: var(--rp-font-size);
-  line-height: 1.55;
-  margin: 0 0 6px;
+  line-height: 1.6;
+  margin: 0 0 7px;
   word-break: keep-all;
+  color: #5b4a3d;
 }
 
 .rp-letter-from {
   font-size: calc(var(--rp-font-size) * 0.82);
   text-align: right;
   margin: 0;
-  color: #8a7a5f;
+  color: #b08a63;
 }
 
 /* ---------- 4. 파스텔 톤형 ---------- */
 .rp-pastel {
   font-family: "Gaegu", sans-serif;
-  background: linear-gradient(180deg, #eef2fb, #f7f3fb);
+  background: linear-gradient(160deg, #fdf2fb 0%, #eee7ff 50%, #e6f7f1 100%);
 }
 
 .rp-pastel .rp-title {
-  font-size: calc(var(--rp-font-size) * 2);
-  color: #4d4f7a;
+  font-size: calc(var(--rp-font-size) * 2.1);
+  color: #8a6bd6;
 }
 
 .rp-pastel-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 12px;
+  gap: 14px;
 }
 
 .rp-pastel-card {
   background: #ffffff;
-  border-radius: 16px;
-  padding: 14px 15px;
-  box-shadow: 0 4px 10px -4px rgba(77, 79, 122, 0.25);
+  border-radius: 18px;
+  padding: 16px 17px;
+  box-shadow: 0 6px 14px -6px rgba(138, 107, 214, 0.3);
 }
 
 .rp-pastel-content {
   font-size: var(--rp-font-size);
-  line-height: 1.4;
-  margin: 0 0 8px;
-  color: #3d3f63;
+  line-height: 1.45;
+  margin: 0 0 9px;
+  color: #5b4a7a;
   word-break: keep-all;
 }
 
@@ -175,6 +180,6 @@
   font-size: calc(var(--rp-font-size) * 0.85);
   text-align: right;
   margin: 0;
-  color: #8f7bd6;
+  color: #ff8fc0;
   font-weight: 700;
 }
