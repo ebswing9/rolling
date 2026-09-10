@@ -5,7 +5,7 @@
    - 팔레트: 라벤더 배경 + 버블검 핑크 & 라일락 그라데이션 포인트
 */
 
-@import url("https://fonts.googleapis.com/css2?family=Jua&family=Gaegu:wght@400;700&family=Gowun+Dodum&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Jua&family=Gaegu:wght@400;700&family=Do+Hyeon&family=Gowun+Dodum&display=swap");
 
 :root {
   --rp-bg-1: #fdf2fb;
@@ -46,7 +46,7 @@ textarea {
 body {
   margin: 0;
   min-height: 100vh;
-  font-family: "Gowun Dodum", "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
+  font-family: "Do Hyeon", "Gowun Dodum", "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
   font-size: 16px;
   color: var(--rp-ink);
   background:
