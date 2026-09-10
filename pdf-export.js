@@ -132,17 +132,22 @@ async function renderToCanvas(html) {
 
   // 실제 내용 높이만큼만 렌더링하면, 배경색/그라데이션이 내용 끝에서
   // 뚝 끊기고 그 아래는 PDF의 기본 흰 배경이 드러나 보입니다.
-  // 그래서 항상 A4 페이지 높이의 정배수로 컨테이너 높이를 강제로 늘려서
-  // 템플릿 배경이 페이지 끝까지 꽉 채워지도록 만듭니다.
-  const neededPages = Math.min(MAX_PAGES, Math.max(1, Math.ceil(page.scrollHeight / PAGE_H)));
-  page.style.height = `${neededPages * PAGE_H}px`;
-  page.style.overflow = "hidden";
+  // 그래서 컨테이너 높이를 항상 A4 페이지의 정배수로 "올림" 처리해서
+  // 배경이 페이지 끝까지 꽉 채워지도록 만듭니다.
+  // (내용이 min 폰트로 줄여도 2페이지를 넘는 극단적인 경우, 절대로
+  //  내용을 잘라내지 않고 페이지 수를 자연스럽게 늘립니다.)
+  const finalHeight = page.scrollHeight;
+  const neededPages = Math.max(1, Math.ceil(finalHeight / PAGE_H));
+  const containerHeight = neededPages * PAGE_H;
+  page.style.height = `${containerHeight}px`;
+  page.style.overflow = "visible";
 
   const canvas = await html2canvas(page, {
     scale: RENDER_SCALE,
     backgroundColor: "#ffffff",
     windowWidth: PAGE_W,
-    height: neededPages * PAGE_H,
+    height: containerHeight,
+    windowHeight: containerHeight,
   });
   document.body.removeChild(host);
   return canvas;

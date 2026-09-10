@@ -35,10 +35,17 @@
   box-sizing: border-box;
 }
 
+input,
+button,
+select,
+textarea {
+  font-family: inherit;
+}
+
 body {
   margin: 0;
   min-height: 100vh;
-  font-family: "Gowun Dodum", sans-serif;
+  font-family: "Gowun Dodum", "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
   font-size: 16px;
   color: var(--rp-ink);
   background:
@@ -71,7 +78,7 @@ body {
 }
 
 .rp-brand h1 {
-  font-family: "Jua", sans-serif;
+  font-family: "Jua", "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
   font-size: 24px;
   font-weight: 400;
   margin: 0;
@@ -286,8 +293,8 @@ select.rp-input {
 }
 
 .rp-roster-item.done {
-  background: linear-gradient(135deg, #f2fdf8, #f2fbff);
-  border-color: var(--rp-mint);
+  background: linear-gradient(135deg, #fff5fa, #fdeef7);
+  border-color: var(--rp-mint-deep);
   color: var(--rp-ink-soft);
 }
 
@@ -344,7 +351,7 @@ select.rp-input {
 }
 
 .rp-modal h2 {
-  font-family: "Jua", sans-serif;
+  font-family: "Jua", "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
   font-weight: 400;
   font-size: 20px;
   margin: 0 0 10px;
@@ -429,7 +436,7 @@ select.rp-input {
 
 .rp-toggle-line strong {
   font-size: 15px;
-  font-family: "Jua", sans-serif;
+  font-family: "Jua", "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
   font-weight: 400;
   color: var(--rp-ink);
 }
@@ -535,7 +542,7 @@ table.rp-table tr:hover td {
 }
 
 .rp-panel-heading {
-  font-family: "Jua", sans-serif;
+  font-family: "Jua", "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
   font-weight: 400;
   font-size: 16px;
   color: var(--rp-ink);
@@ -589,7 +596,7 @@ table.rp-table tr:hover td {
 }
 
 .rp-write-to {
-  font-family: "Jua", sans-serif;
+  font-family: "Jua", "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
   font-size: 19px;
   color: var(--rp-pink-deep);
   margin: 0;
