@@ -4,9 +4,10 @@
 
 const PAGE_W = 794; // A4 폭 (96dpi 기준 px)
 const PAGE_H = 1123; // A4 높이 (96dpi 기준 px)
-const MAX_PAGES = 2;
+const MAX_PAGES = 2; // 무슨 일이 있어도 이 페이지 수를 넘기지 않음
+const PAGE_SAFE_MARGIN = 36; // 각 페이지 하단에 항상 남겨둘 여백(px)
 const RENDER_SCALE = 2; // html2canvas 해상도 배율
-const MIN_FONT_PX = 7;
+const MIN_FONT_PX = 6;
 const START_FONT_PX = 16;
 
 // ---------------------------------------------------------------
@@ -122,46 +123,60 @@ async function renderToCanvas(html) {
   page.style.setProperty("--rp-font-size", `${START_FONT_PX}px`);
   page.style.boxSizing = "border-box";
 
+  // 실제로 글자를 채울 수 있는 높이는 페이지 높이에서 안전 여백을 뺀 만큼입니다.
+  const usableHeightPerPage = PAGE_H - PAGE_SAFE_MARGIN;
+  const contentMaxHeight = usableHeightPerPage * MAX_PAGES;
+
   let fontSize = START_FONT_PX;
-  const maxHeight = PAGE_H * MAX_PAGES;
-  // 0.5px씩 줄여가며 2페이지 높이 안에 들어올 때까지 반복
-  while (page.scrollHeight > maxHeight && fontSize > MIN_FONT_PX) {
+  while (page.scrollHeight > contentMaxHeight && fontSize > MIN_FONT_PX) {
     fontSize -= 0.5;
     page.style.setProperty("--rp-font-size", `${fontSize}px`);
   }
 
-  // 실제 내용 높이만큼만 렌더링하면, 배경색/그라데이션이 내용 끝에서
-  // 뚝 끊기고 그 아래는 PDF의 기본 흰 배경이 드러나 보입니다.
-  // 그래서 컨테이너 높이를 항상 A4 페이지의 정배수로 "올림" 처리해서
-  // 배경이 페이지 끝까지 꽉 채워지도록 만듭니다.
-  // (내용이 min 폰트로 줄여도 2페이지를 넘는 극단적인 경우, 절대로
-  //  내용을 잘라내지 않고 페이지 수를 자연스럽게 늘립니다.)
-  const finalHeight = page.scrollHeight;
-  const neededPages = Math.max(1, Math.ceil(finalHeight / PAGE_H));
-  const containerHeight = neededPages * PAGE_H;
-  page.style.height = `${containerHeight}px`;
+  const naturalHeight = page.scrollHeight;
+  // 최소 폰트로 줄여도 여전히 넘치는 극단적인 경우, 절대로 페이지 수를
+  // 늘리지 않고 대신 화면을 세로로 살짝 압축해서 딱 2페이지 안에 맞춥니다.
+  const overflowing = naturalHeight > contentMaxHeight;
+  const renderHeight = overflowing
+    ? naturalHeight
+    : Math.ceil(naturalHeight / PAGE_H) * PAGE_H; // 배경을 페이지 끝까지 채우기 위해 정배수로 올림
+  page.style.height = `${renderHeight}px`;
   page.style.overflow = "visible";
 
   const canvas = await html2canvas(page, {
     scale: RENDER_SCALE,
     backgroundColor: "#ffffff",
     windowWidth: PAGE_W,
-    height: containerHeight,
-    windowHeight: containerHeight,
+    height: renderHeight,
+    windowHeight: renderHeight,
   });
   document.body.removeChild(host);
-  return canvas;
+
+  if (!overflowing) return canvas;
+
+  // 세로 방향으로만 압축해서 정확히 MAX_PAGES(및 안전 여백) 안에 들어오게 만듭니다.
+  const targetPx = (usableHeightPerPage * MAX_PAGES + PAGE_SAFE_MARGIN) * RENDER_SCALE;
+  const squeezed = document.createElement("canvas");
+  squeezed.width = canvas.width;
+  squeezed.height = targetPx;
+  const ctx = squeezed.getContext("2d");
+  ctx.fillStyle = "#ffffff";
+  ctx.fillRect(0, 0, squeezed.width, squeezed.height);
+  ctx.drawImage(canvas, 0, 0, canvas.width, canvas.height, 0, 0, squeezed.width, squeezed.height);
+  return squeezed;
 }
 
 function sliceCanvasIntoPages(canvas) {
   const pxPerPage = PAGE_H * RENDER_SCALE;
-  const totalPages = Math.max(1, Math.round(canvas.height / pxPerPage));
+  const totalPages = Math.min(MAX_PAGES, Math.max(1, Math.round(canvas.height / pxPerPage)));
   const pages = [];
   for (let i = 0; i < totalPages; i++) {
     const pageCanvas = document.createElement("canvas");
     pageCanvas.width = canvas.width;
     pageCanvas.height = pxPerPage;
     const ctx = pageCanvas.getContext("2d");
+    ctx.fillStyle = "#ffffff";
+    ctx.fillRect(0, 0, pageCanvas.width, pageCanvas.height);
     ctx.drawImage(
       canvas,
       0,

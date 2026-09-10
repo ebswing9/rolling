@@ -10,7 +10,24 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 </head>
 <body>
-<div class="rp-shell wide">
+
+<!-- 접근 잠금 화면 -->
+<div id="lockScreen" class="rp-shell" style="max-width:400px; padding-top:80px;">
+  <div class="rp-brand" style="justify-content:center;">
+    <span class="mark">🔒</span>
+    <h1>관리자 확인</h1>
+  </div>
+  <div class="rp-card-box">
+    <div class="rp-field">
+      <label>관리자 비밀번호</label>
+      <input type="password" id="lockPasswordInput" autocomplete="off" />
+    </div>
+    <button class="rp-btn primary block" id="lockConfirmBtn">들어가기</button>
+    <p class="rp-error" id="lockError"></p>
+  </div>
+</div>
+
+<div class="rp-shell wide" id="adminMain" style="display:none;">
   <div class="rp-brand">
     <span class="mark">🗂️</span>
     <h1>롤링페이퍼 관리자</h1>
@@ -139,6 +156,38 @@ import {
 import { TEMPLATES, exportSingle, exportBatch } from "./pdf-export.js";
 
 const $ = (id) => document.getElementById(id);
+
+// ---------- 접근 잠금 ----------
+// 완벽한 보안은 아니고(페이지 소스를 보면 비밀번호가 보여요), 아무나
+// URL만 알면 바로 못 들어오게 막는 최소한의 장치예요.
+// 실제 사용 전에 아래 비밀번호를 원하는 값으로 바꿔주세요.
+const ADMIN_PASSWORD = "sugar";
+
+function unlockAdmin() {
+  sessionStorage.setItem("rp_admin_unlocked", "1");
+  document.getElementById("lockScreen").style.display = "none";
+  document.getElementById("adminMain").style.display = "";
+  initAdminApp();
+}
+
+document.getElementById("lockConfirmBtn").onclick = () => {
+  const input = document.getElementById("lockPasswordInput").value;
+  if (input === ADMIN_PASSWORD) {
+    unlockAdmin();
+  } else {
+    document.getElementById("lockError").textContent = "비밀번호가 맞지 않아요.";
+  }
+};
+
+document.getElementById("lockPasswordInput").addEventListener("keydown", (e) => {
+  if (e.key === "Enter") document.getElementById("lockConfirmBtn").click();
+});
+
+if (sessionStorage.getItem("rp_admin_unlocked") === "1") {
+  unlockAdmin();
+}
+
+function initAdminApp() {
 let roster = {};
 let isOpenState = false;
 
@@ -374,6 +423,8 @@ $("pdfBatchBtn").onclick = async () => {
     $("pdfBatchStatus").textContent = "생성 중 오류가 발생했어요.";
   }
 };
+
+} // initAdminApp 끝
 </script>
 </body>
 </html>
