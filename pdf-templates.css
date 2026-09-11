@@ -1,8 +1,9 @@
 /* pdf-templates.css
    PDF로 렌더링될 4가지 롤링페이퍼 디자인 템플릿.
-   .rp-page 안의 --rp-font-size 변수는 pdf-export.js가 자동으로
-   조절하여 A4 2페이지 안에 맞춥니다. 컨테이너 높이도 자동으로
-   A4 페이지의 정배수로 늘어나서 배경이 페이지 끝까지 채워집니다. */
+   .rp-page 안의 --rp-scale 변수는 pdf-export.js가 자동으로 조절합니다.
+   글자 크기뿐 아니라 카드/포스트잇의 크기·여백·간격까지 이 변수 하나로
+   함께 축소되어, 내용이 많아도 카드가 잘리지 않고 페이지 안에 온전히
+   들어가도록 만듭니다. */
 
 @import url("https://fonts.googleapis.com/css2?family=Jua&family=Gaegu:wght@400;700&family=Gowun+Dodum&display=swap");
 
@@ -11,7 +12,8 @@
   padding: 44px 40px 60px;
   background: #ffffff;
   box-sizing: border-box;
-  --rp-font-size: 16px;
+  --rp-scale: 1;
+  --rp-font-size: calc(16px * var(--rp-scale));
 }
 
 .rp-page .rp-title {
@@ -35,18 +37,18 @@
 .rp-note-grid {
   display: flex;
   flex-wrap: wrap;
-  gap: 16px;
+  gap: calc(16px * var(--rp-scale));
   justify-content: center;
   align-content: flex-start;
 }
 
 .rp-note {
-  width: 220px;
-  min-height: 130px;
+  width: calc(220px * var(--rp-scale));
+  min-height: calc(130px * var(--rp-scale));
   background: var(--bg, #ffe1ec);
   transform: rotate(var(--rot, 0deg));
-  border-radius: 10px;
-  padding: 16px 18px;
+  border-radius: calc(10px * var(--rp-scale));
+  padding: calc(16px * var(--rp-scale)) calc(18px * var(--rp-scale));
   box-shadow: 0 8px 14px -6px rgba(155, 100, 150, 0.28);
   display: flex;
   flex-direction: column;
@@ -86,13 +88,13 @@
 .rp-card-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 12px;
+  gap: calc(12px * var(--rp-scale));
 }
 
 .rp-card {
   border: 2px solid #f4e2f2;
-  border-radius: 14px;
-  padding: 12px 14px;
+  border-radius: calc(14px * var(--rp-scale));
+  padding: calc(12px * var(--rp-scale)) calc(14px * var(--rp-scale));
   background: #fffaff;
 }
 
@@ -129,7 +131,7 @@
 }
 
 .rp-letter-item {
-  padding: 14px 4px;
+  padding: calc(14px * var(--rp-scale)) calc(4px * var(--rp-scale));
   border-bottom: 1.5px dashed #e8d6c4;
 }
 
@@ -162,13 +164,13 @@
 .rp-pastel-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 14px;
+  gap: calc(14px * var(--rp-scale));
 }
 
 .rp-pastel-card {
   background: #ffffff;
-  border-radius: 18px;
-  padding: 16px 17px;
+  border-radius: calc(18px * var(--rp-scale));
+  padding: calc(16px * var(--rp-scale)) calc(17px * var(--rp-scale));
   box-shadow: 0 6px 14px -6px rgba(138, 107, 214, 0.3);
 }
 
