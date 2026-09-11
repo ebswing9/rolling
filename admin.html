@@ -1,164 +1,430 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>관리자 페이지 - 우리반 고민 나누기</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.css" />
-<link rel="stylesheet" href="style.css">
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>롤링페이퍼 관리자</title>
+<link rel="stylesheet" href="app.css" />
+<link rel="stylesheet" href="pdf-templates.css" />
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 </head>
 <body>
-<div class="blob blob1"></div>
-<div class="blob blob2"></div>
-<div class="blob blob3"></div>
-<div class="wrap" style="max-width:820px;">
-  <div class="topbar">
-    <h2>👩‍🏫 관리자 페이지</h2>
-    <button class="secondary" onclick="logout()">로그아웃</button>
+
+<!-- 접근 잠금 화면 -->
+<div id="lockScreen" class="rp-shell" style="max-width:400px; padding-top:80px;">
+  <div class="rp-brand" style="justify-content:center;">
+    <span class="mark">🔒</span>
+    <h1>관리자 확인</h1>
+  </div>
+  <div class="rp-card-box">
+    <div class="rp-field">
+      <label>관리자 비밀번호</label>
+      <input type="password" id="lockPasswordInput" autocomplete="off" />
+    </div>
+    <button class="rp-btn primary block" id="lockConfirmBtn">들어가기</button>
+    <p class="rp-error" id="lockError"></p>
+  </div>
+</div>
+
+<div class="rp-shell wide" id="adminMain" style="display:none;">
+  <div class="rp-brand">
+    <span class="mark">🗂️</span>
+    <h1>롤링페이퍼 관리자</h1>
+    <span class="sub">교사용</span>
   </div>
 
-  <div id="no-round-view" class="hidden card">
-    <p>아직 시작된 라운드가 없습니다.</p>
-    <button onclick="startFirstRound()">1라운드 시작하기</button>
+  <div class="rp-toggle-line">
+    <div>
+      <strong>학생 작성 기간</strong>
+      <p>켜져 있는 동안에만 학생들이 롤링페이퍼를 작성할 수 있어요.</p>
+    </div>
+    <button class="rp-switch" id="openSwitch"></button>
   </div>
 
-  <div id="main-view" class="hidden">
-    <p class="muted" id="round-label"></p>
-    <div class="tabs">
-      <button data-tab="accounts" class="active">계정관리</button>
-      <button data-tab="submissions">제출현황</button>
-      <button data-tab="matching">매칭</button>
-      <button data-tab="monitor">모니터링</button>
-      <button data-tab="flagged">⚠️ 확인필요</button>
-      <button data-tab="settings">설정</button>
+  <div class="rp-tabs">
+    <button class="rp-tab active" data-tab="roster">명단 관리</button>
+    <button class="rp-tab" data-tab="byWriter">작성자별 모아보기</button>
+    <button class="rp-tab" data-tab="byRecipient">수신자별 모아보기</button>
+    <button class="rp-tab" data-tab="pdf">PDF 내보내기</button>
+  </div>
+
+  <!-- 명단 관리 -->
+  <div class="rp-panel active" id="panel-roster">
+    <div class="rp-card-box" style="margin-bottom:16px;">
+      <div class="rp-row" style="margin-bottom:12px;">
+        <input type="text" id="newStudentName" class="rp-input" placeholder="학생 이름 입력" style="flex:1;" />
+        <button class="rp-btn primary" id="addStudentBtn">추가</button>
+      </div>
+      <div class="rp-row wrap" style="border-top:1.5px dashed var(--rp-line); padding-top:12px;">
+        <label class="rp-btn ghost rp-mini" style="cursor:pointer; margin:0;">
+          📤 CSV로 한번에 업로드
+          <input type="file" id="csvUploadInput" accept=".csv,text/csv" style="display:none;" />
+        </label>
+        <button class="rp-btn ghost rp-mini" id="csvDownloadBtn">📥 현재 명단 CSV 다운로드</button>
+      </div>
+      <p class="rp-error" id="csvStatus" style="color:var(--rp-ink-soft); font-weight:500;"></p>
     </div>
-
-    <!-- 계정관리 -->
-    <div id="tab-accounts" class="tab-panel">
-      <div class="card">
-        <h3>✨ 학생 계정 일괄 생성</h3>
-        <p class="muted">한 줄에 한 명씩, <b>이름,아이디,비밀번호</b> 형식으로 입력하세요. 아이디나 비밀번호를 생략하면 아이디는 자동 생성되고, 비밀번호는 아래 "공통 비밀번호"가 대신 쓰여요.</p>
-
-        <div class="row" style="margin-bottom:10px;">
-          <label class="secondary" style="text-align:center; cursor:pointer;">
-            📂 CSV 파일 불러오기
-            <input type="file" id="csv-file-input" accept=".csv" class="hidden">
-          </label>
-          <button class="secondary" onclick="downloadRosterCsv()">📥 현재 명단 CSV 다운로드</button>
-        </div>
-
-        <textarea id="roster-input" placeholder="김민준,student01,pw1234&#10;이서연,student02,pw5678&#10;박도윤,student03"></textarea>
-        <label>공통 비밀번호 (개별 비밀번호를 안 적었을 때만 사용)</label>
-        <input type="text" id="default-password" value="changeme123">
-        <button onclick="bulkCreateAccounts()">일괄 생성하기 🎀</button>
-        <div id="account-result" style="margin-top:10px;"></div>
-      </div>
-      <div class="card">
-        <div class="row">
-          <h3 style="margin:0;">현재 등록된 학생 목록</h3>
-          <button class="danger" onclick="bulkDeleteAccounts()">선택 삭제</button>
-        </div>
-        <table id="account-table"></table>
-        <p class="muted" style="margin-top:10px;">🗑️ 삭제하면 그 학생은 더 이상 로그인할 수 없어요. 단, 실제 Firebase 인증 계정 자체는 남아있어서 <b>같은 아이디로는 다시 생성이 안 돼요.</b> 완전히 새로 만들고 싶다면 Firebase 콘솔 → Authentication에서 그 계정을 직접 지우거나, 다른 아이디로 새로 만들어주세요.</p>
-      </div>
+    <div class="rp-card-box">
+      <table class="rp-table" id="rosterTable">
+        <thead>
+          <tr><th>이름</th><th>비밀번호 설정 여부</th><th></th></tr>
+        </thead>
+        <tbody id="rosterTableBody"></tbody>
+      </table>
     </div>
+  </div>
 
-    <!-- 제출현황 -->
-    <div id="tab-submissions" class="tab-panel hidden">
-      <div class="card">
-        <div class="row">
-          <strong id="submission-count"></strong>
-          <div class="row" style="flex-shrink:0; width:auto;">
-            <button id="close-round-btn" onclick="closeRound()">제출 마감</button>
-            <button id="reopen-round-btn" class="secondary hidden" onclick="reopenRound()">마감 취소</button>
-          </div>
-        </div>
+  <!-- 작성자별 모아보기 -->
+  <div class="rp-panel" id="panel-byWriter">
+    <div class="rp-card-box">
+      <div class="rp-field">
+        <label>학생 선택 (작성자)</label>
+        <select id="writerSelect"></select>
       </div>
-      <div class="card"><table id="submission-table"></table></div>
-      <div class="card">
-        <h3>📋 제출된 고민 미리보기</h3>
-        <p class="muted">매칭을 실행하기 전에, 내용에 이상이 없는지 한 번 훑어보세요.</p>
-        <div id="preview-list"></div>
-      </div>
+      <div id="writerResult"></div>
     </div>
+  </div>
 
-    <!-- 매칭 -->
-    <div id="tab-matching" class="tab-panel hidden">
-      <div class="card">
-        <p class="muted">마감 후에 매칭을 실행할 수 있습니다.</p>
-        <button id="run-match-btn" onclick="runMatching()">매칭 실행</button>
-        <button class="secondary" id="rematch-btn" onclick="runMatching()">전체 재실행</button>
+  <!-- 수신자별 모아보기 -->
+  <div class="rp-panel" id="panel-byRecipient">
+    <div class="rp-card-box">
+      <div class="rp-field">
+        <label>학생 선택 (수신자)</label>
+        <select id="recipientSelect"></select>
       </div>
-      <div class="card">
-        <h3>매칭 결과</h3>
-        <table id="match-table"></table>
-        <div class="row" style="margin-top:10px; gap:8px;">
-          <select id="swap-a"></select>
-          <span>↔</span>
-          <select id="swap-b"></select>
-          <button class="secondary" onclick="swapMatch()">맞바꾸기</button>
-        </div>
-      </div>
-      <button id="deploy-btn" onclick="deployMatch()">배포하기</button>
+      <div id="recipientResult"></div>
     </div>
+  </div>
 
-    <!-- 모니터링 -->
-    <div id="tab-monitor" class="tab-panel hidden">
-      <div class="card">
-        <h3>❤️ 하트 받은 학생</h3>
-        <div id="heart-summary"></div>
+  <!-- PDF 내보내기 -->
+  <div class="rp-panel" id="panel-pdf">
+    <div class="rp-card-box" style="margin-bottom:16px;">
+      <div class="rp-field">
+        <label>디자인 템플릿</label>
+        <select id="templateSelect"></select>
       </div>
-      <div id="monitor-list"></div>
-    </div>
-
-    <!-- 확인필요 -->
-    <div id="tab-flagged" class="tab-panel hidden">
-      <div id="flagged-list"></div>
-    </div>
-
-    <!-- 설정 -->
-    <div id="tab-settings" class="tab-panel hidden">
-      <div class="card">
-        <h3>답장 방식 (배포 시점에 적용됩니다)</h3>
-        <label><input type="radio" name="replyMode" value="single"> 답장 1회만</label><br>
-        <label><input type="radio" name="replyMode" value="thread"> 계속 대화 가능</label>
+      <div class="rp-field">
+        <label>작성자 이름 표시</label>
+        <select id="nameDisplaySelect">
+          <option value="real">실명 표시</option>
+          <option value="anon">전체 익명 처리</option>
+        </select>
       </div>
-      <div class="card">
-        <h3>⚠️ 위험신호 키워드 관리</h3>
-        <div id="keyword-chips"></div>
-        <div class="row" style="gap:8px; margin-top:10px;">
-          <input type="text" id="new-keyword" placeholder="키워드 추가">
-          <button onclick="addKeyword()">추가</button>
-        </div>
+      <div class="rp-field" style="display:flex; align-items:center; gap:10px; margin-bottom:10px;">
+        <input type="checkbox" id="fillMissingCheckbox" style="width:18px; height:18px; accent-color:var(--rp-pink-deep);" />
+        <label for="fillMissingCheckbox" style="margin:0; cursor:pointer;">미작성자도 같은 문구로 채워서 내보내기</label>
       </div>
-      <div class="card">
-        <h3>📦 지난 라운드 보관함</h3>
-        <p class="muted">초기화된 이전 라운드들이에요. 눌러보면 그때 오갔던 고민/답장을 확인할 수 있어요.</p>
-        <div id="archived-rounds-list"></div>
-      </div>
-      <div class="card">
-        <h3>백업 / 초기화</h3>
-        <button onclick="downloadBackup()">📥 현재 라운드 백업 다운로드</button><br><br>
-        <button class="danger" onclick="resetRound()">🔄 라운드 초기화 (다음 라운드 시작)</button>
-        <p class="muted">초기화해도 이전 데이터는 삭제되지 않고 보관(archived) 처리되어, 위 "지난 라운드 보관함"에서 계속 볼 수 있어요.</p>
+      <div class="rp-field" id="fillMissingTextWrap" style="display:none;">
+        <label>미작성자에게 채울 문구</label>
+        <textarea id="fillMissingText" maxlength="200" placeholder="예: 항상 네가 잘 지내기를 바랄게!"></textarea>
       </div>
     </div>
 
-    <!-- 지난 라운드 상세보기 -->
-    <div id="tab-archived-detail" class="tab-panel hidden">
-      <button class="secondary back-btn" onclick="closeArchivedDetail()">‹ 설정으로</button>
-      <h2 id="archived-detail-title"></h2>
-      <div id="archived-detail-list"></div>
+    <div class="rp-card-box" style="margin-bottom:16px;">
+      <h3 class="rp-panel-heading">📄 개별 학생 PDF 다운로드</h3>
+      <div class="rp-row">
+        <select id="pdfSingleSelect" class="rp-input" style="flex:1;"></select>
+        <button class="rp-btn primary" id="pdfSingleBtn">다운로드</button>
+      </div>
+      <p class="rp-error" id="pdfSingleStatus" style="color:var(--rp-ink-soft); font-weight:500;"></p>
+    </div>
+
+    <div class="rp-card-box">
+      <h3 class="rp-panel-heading">📦 반 전체 일괄 내보내기</h3>
+      <p style="font-size:13px; color:var(--rp-ink-soft); margin-top:0;">받은 메시지가 있는 학생들을 모아 학생별로 페이지가 이어지는 PDF 한 개로 만들어요.</p>
+      <button class="rp-btn sage block" id="pdfBatchBtn">전체 일괄 다운로드</button>
+      <p class="rp-error" id="pdfBatchStatus" style="color:var(--rp-ink-soft); font-weight:500;"></p>
     </div>
   </div>
 </div>
 
-<script src="https://www.gstatic.com/firebasejs/10.13.1/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.13.1/firebase-auth-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.13.1/firebase-firestore-compat.js"></script>
-<script src="firebase-config.js"></script>
-<script src="auth.js"></script>
-<script src="admin.js"></script>
+<script type="module">
+import {
+  watchIsOpen,
+  setIsOpen,
+  watchRoster,
+  addStudent,
+  addStudentsBulk,
+  removeStudent,
+  hasPassword,
+  resetPassword,
+  getWrittenBy,
+  getMessage,
+  getMessagesFor,
+} from "./rolling-common.js";
+import { TEMPLATES, exportSingle, exportBatch } from "./pdf-export.js";
+
+const $ = (id) => document.getElementById(id);
+
+// ---------- 접근 잠금 ----------
+// 완벽한 보안은 아니고(페이지 소스를 보면 비밀번호가 보여요), 아무나
+// URL만 알면 바로 못 들어오게 막는 최소한의 장치예요.
+// 실제 사용 전에 아래 비밀번호를 원하는 값으로 바꿔주세요.
+const ADMIN_PASSWORD = "sugar";
+
+function unlockAdmin() {
+  sessionStorage.setItem("rp_admin_unlocked", "1");
+  document.getElementById("lockScreen").style.display = "none";
+  document.getElementById("adminMain").style.display = "";
+  initAdminApp();
+}
+
+document.getElementById("lockConfirmBtn").onclick = () => {
+  const input = document.getElementById("lockPasswordInput").value;
+  if (input === ADMIN_PASSWORD) {
+    unlockAdmin();
+  } else {
+    document.getElementById("lockError").textContent = "비밀번호가 맞지 않아요.";
+  }
+};
+
+document.getElementById("lockPasswordInput").addEventListener("keydown", (e) => {
+  if (e.key === "Enter") document.getElementById("lockConfirmBtn").click();
+});
+
+if (sessionStorage.getItem("rp_admin_unlocked") === "1") {
+  unlockAdmin();
+}
+
+function initAdminApp() {
+let roster = {};
+let isOpenState = false;
+
+// ---------- 탭 전환 ----------
+document.querySelectorAll(".rp-tab").forEach((tab) => {
+  tab.onclick = () => {
+    document.querySelectorAll(".rp-tab").forEach((t) => t.classList.remove("active"));
+    document.querySelectorAll(".rp-panel").forEach((p) => p.classList.remove("active"));
+    tab.classList.add("active");
+    $(`panel-${tab.dataset.tab}`).classList.add("active");
+  };
+});
+
+// ---------- 작성 기간 토글 ----------
+watchIsOpen((isOpen) => {
+  isOpenState = isOpen;
+  $("openSwitch").classList.toggle("on", isOpen);
+});
+$("openSwitch").onclick = async () => {
+  await setIsOpen(!isOpenState);
+};
+
+// ---------- 명단 실시간 반영 ----------
+watchRoster(async (r) => {
+  roster = r;
+  await renderRosterTable();
+  renderSelect($("writerSelect"), roster);
+  renderSelect($("recipientSelect"), roster);
+  renderSelect($("pdfSingleSelect"), roster);
+});
+
+function renderSelect(selectEl, r) {
+  const prev = selectEl.value;
+  selectEl.innerHTML = Object.entries(r)
+    .sort((a, b) => a[1].name.localeCompare(b[1].name, "ko"))
+    .map(([id, s]) => `<option value="${id}">${s.name}</option>`)
+    .join("");
+  if (prev && r[prev]) selectEl.value = prev;
+}
+
+async function renderRosterTable() {
+  const rows = await Promise.all(
+    Object.entries(roster)
+      .sort((a, b) => a[1].name.localeCompare(b[1].name, "ko"))
+      .map(async ([id, s]) => {
+        const has = await hasPassword(id);
+        return `<tr>
+          <td>${s.name}</td>
+          <td>${has ? "✅ 설정됨" : "미설정"}</td>
+          <td>
+            <button class="rp-btn ghost rp-mini" data-action="reset" data-id="${id}">비밀번호 초기화</button>
+            <button class="rp-btn ghost rp-mini" data-action="remove" data-id="${id}">삭제</button>
+          </td>
+        </tr>`;
+      })
+  );
+  $("rosterTableBody").innerHTML = rows.join("");
+  $("rosterTableBody").querySelectorAll("button[data-action]").forEach((btn) => {
+    btn.onclick = async () => {
+      const id = btn.dataset.id;
+      if (btn.dataset.action === "reset") {
+        await resetPassword(id);
+        alert(`${roster[id].name} 학생의 비밀번호가 초기화되었습니다. 다음 접속 때 새로 설정하게 됩니다.`);
+        renderRosterTable();
+      } else if (btn.dataset.action === "remove") {
+        if (confirm(`${roster[id].name} 학생을 명단과 관련 데이터에서 삭제할까요?`)) {
+          await removeStudent(id);
+        }
+      }
+    };
+  });
+}
+
+$("addStudentBtn").onclick = async () => {
+  const name = $("newStudentName").value.trim();
+  if (!name) return;
+  await addStudent(name);
+  $("newStudentName").value = "";
+};
+
+// ---------- CSV 업로드 / 다운로드 ----------
+function parseCsvNames(text) {
+  return text
+    .split(/\r?\n/)
+    .map((line) => line.split(",")[0].trim()) // 첫 번째 칸을 이름으로 사용
+    .filter((name) => name && name !== "이름" && name !== "name");
+}
+
+$("csvUploadInput").addEventListener("change", async (e) => {
+  const file = e.target.files[0];
+  if (!file) return;
+  $("csvStatus").textContent = "업로드 중...";
+  try {
+    const text = await file.text();
+    const names = parseCsvNames(text);
+    const added = await addStudentsBulk(names);
+    $("csvStatus").textContent = `${names.length}명 중 ${added}명을 새로 추가했어요. (이미 있는 이름은 건너뜀)`;
+  } catch (err) {
+    console.error(err);
+    $("csvStatus").textContent = "CSV를 읽는 중 오류가 발생했어요.";
+  } finally {
+    e.target.value = "";
+  }
+});
+
+$("csvDownloadBtn").onclick = () => {
+  const names = Object.values(roster)
+    .map((s) => s.name)
+    .sort((a, b) => a.localeCompare(b, "ko"));
+  const csv = "이름\n" + names.join("\n");
+  const blob = new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8;" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = "롤링페이퍼_명단.csv";
+  a.click();
+  URL.revokeObjectURL(url);
+};
+
+// ---------- 작성자별 모아보기 ----------
+$("writerSelect").onchange = renderWriterResult;
+watchRoster(() => renderWriterResult()); // 명단 바뀔 때도 갱신
+
+async function renderWriterResult() {
+  const fromId = $("writerSelect").value;
+  if (!fromId || !roster[fromId]) return;
+  const written = await getWrittenBy(fromId);
+  const others = Object.entries(roster).filter(([id]) => id !== fromId);
+  const items = await Promise.all(
+    others
+      .sort((a, b) => a[1].name.localeCompare(b[1].name, "ko"))
+      .map(async ([toId, s]) => {
+        const done = !!written[toId];
+        let preview = "";
+        if (done) {
+          const msg = await getMessage(fromId, toId);
+          preview = msg ? `<div class="rp-msg-preview"><div class="content">${escapeHtml(msg.content)}</div></div>` : "";
+        }
+        return `<div class="rp-roster-item ${done ? "done" : ""}" style="cursor:default;">
+          <span>${s.name}</span>
+          <span class="rp-badge ${done ? "done" : "todo"}">${done ? "작성함" : "미작성"}</span>
+        </div>${preview}`;
+      })
+  );
+  $("writerResult").innerHTML = `<div class="rp-roster-list">${items.join("")}</div>`;
+}
+
+// ---------- 수신자별 모아보기 ----------
+$("recipientSelect").onchange = renderRecipientResult;
+
+async function renderRecipientResult() {
+  const toId = $("recipientSelect").value;
+  if (!toId || !roster[toId]) return;
+  const messages = await getMessagesFor(toId);
+  const entries = Object.entries(messages);
+  if (entries.length === 0) {
+    $("recipientResult").innerHTML = `<div class="rp-empty">아직 받은 메시지가 없어요.</div>`;
+    return;
+  }
+  $("recipientResult").innerHTML = entries
+    .map(([fromId, m]) => {
+      const fromName = roster[fromId] ? roster[fromId].name : "(삭제된 학생)";
+      return `<div class="rp-msg-preview">
+        <div class="from">${fromName}</div>
+        <div class="content">${escapeHtml(m.content)}</div>
+      </div>`;
+    })
+    .join("");
+}
+
+function escapeHtml(str) {
+  return String(str).replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;");
+}
+
+// ---------- PDF 내보내기 ----------
+$("templateSelect").innerHTML = Object.entries(TEMPLATES)
+  .map(([key, t]) => `<option value="${key}">${t.label}</option>`)
+  .join("");
+
+$("fillMissingCheckbox").onchange = (e) => {
+  $("fillMissingTextWrap").style.display = e.target.checked ? "" : "none";
+};
+
+async function buildEntries(toId) {
+  const messages = await getMessagesFor(toId);
+  const anon = $("nameDisplaySelect").value === "anon";
+  const entries = Object.entries(messages).map(([fromId, m]) => ({
+    fromName: anon ? null : roster[fromId] ? roster[fromId].name : "익명",
+    content: m.content,
+  }));
+
+  if ($("fillMissingCheckbox").checked) {
+    const fillerText = $("fillMissingText").value.trim();
+    if (fillerText) {
+      const writtenIds = new Set(Object.keys(messages));
+      Object.entries(roster)
+        .filter(([id]) => id !== toId && !writtenIds.has(id))
+        .forEach(([, s]) => {
+          entries.push({ fromName: anon ? null : s.name, content: fillerText });
+        });
+    }
+  }
+  return entries;
+}
+
+$("pdfSingleBtn").onclick = async () => {
+  const toId = $("pdfSingleSelect").value;
+  if (!toId) return;
+  $("pdfSingleStatus").textContent = "PDF 생성 중...";
+  try {
+    const entries = await buildEntries(toId);
+    const toName = roster[toId].name;
+    await exportSingle(toName, entries, $("templateSelect").value, `롤링페이퍼_${toName}.pdf`);
+    $("pdfSingleStatus").textContent = "";
+  } catch (e) {
+    console.error(e);
+    $("pdfSingleStatus").textContent = "생성 중 오류가 발생했어요.";
+  }
+};
+
+$("pdfBatchBtn").onclick = async () => {
+  $("pdfBatchStatus").textContent = "전체 PDF 생성 중... (인원이 많으면 시간이 걸릴 수 있어요)";
+  try {
+    const list = await Promise.all(
+      Object.entries(roster)
+        .sort((a, b) => a[1].name.localeCompare(b[1].name, "ko"))
+        .map(async ([id, s]) => ({ name: s.name, entries: await buildEntries(id) }))
+    );
+    await exportBatch(list, $("templateSelect").value, "롤링페이퍼_전체.pdf");
+    $("pdfBatchStatus").textContent = "";
+  } catch (e) {
+    console.error(e);
+    $("pdfBatchStatus").textContent = "생성 중 오류가 발생했어요.";
+  }
+};
+
+} // initAdminApp 끝
+</script>
 </body>
 </html>
